@@ -303,6 +303,35 @@ final class FolderTab: Identifiable {
         select(selection + delta)
     }
 
+    /// Up (`rows` = -1) or down (`rows` = 1) in the grid. In the grouped grid every scene
+    /// starts a fresh row, so a short last row is handled per scene instead of by a fixed step.
+    func moveVertically(_ rows: Int) {
+        guard !photos.isEmpty else { return }
+        let cols = max(columns, 1)
+        let shown = sections.filter { !$0.range.isEmpty }
+        guard let at = shown.firstIndex(where: { $0.range.contains(selection) }) else {
+            move(by: rows * cols)       // ungrouped grid
+            return
+        }
+        let range = shown[at].range
+        let offset = selection - range.lowerBound
+        let row = offset / cols, col = offset % cols
+        if rows > 0 {
+            if (row + 1) * cols < range.count {
+                select(range.lowerBound + min((row + 1) * cols + col, range.count - 1))
+            } else if at + 1 < shown.count {
+                let next = shown[at + 1].range
+                select(next.lowerBound + min(col, next.count - 1))
+            }
+        } else if row > 0 {
+            select(range.lowerBound + (row - 1) * cols + col)
+        } else if at > 0 {
+            let prev = shown[at - 1].range
+            let lastRow = (prev.count - 1) / cols
+            select(prev.lowerBound + min(lastRow * cols + col, prev.count - 1))
+        }
+    }
+
     func select(_ index: Int) {
         guard !photos.isEmpty else { return }
         if mode == .grid { marked = [] }

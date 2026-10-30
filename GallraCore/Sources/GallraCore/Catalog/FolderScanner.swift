@@ -29,19 +29,30 @@ public struct FolderScanner: Sendable {
         let cached = Dictionary(uniqueKeysWithValues:
             try await catalog.photos(inFolder: folderPath).map { ($0.id, $0) })
 
-        var result: [Photo] = []
-        var changed: [Photo] = []
-        for var photo in onDisk {
+        // Files already known and unchanged keep their catalog data; the rest are read in parallel.
+        var known: [PhotoID: Photo] = [:]
+        var toRead: [Photo] = []
+        for photo in onDisk {
             if let old = cached[photo.id], old.modified == photo.modified, old.fileSize == photo.fileSize {
-                result.append(old)
-                continue
+                known[photo.id] = old
+            } else {
+                toRead.append(photo)
             }
-            let meta = reader.read(photo.url)
-            photo.captureDate = meta.captureDate
-            photo.rating = meta.rating
-            changed.append(photo)
-            result.append(photo)
         }
+        let reader = self.reader
+        let changed = await withTaskGroup(of: Photo.self, returning: [Photo].self) { group in
+            for var photo in toRead {
+                group.addTask {
+                    let meta = reader.read(photo.url)
+                    photo.captureDate = meta.captureDate
+                    photo.rating = meta.rating
+                    return photo
+                }
+            }
+            return await group.reduce(into: []) { $0.append($1) }
+        }
+        for photo in changed { known[photo.id] = photo }
+        let result = onDisk.compactMap { known[$0.id] }
         if !changed.isEmpty { try await catalog.upsert(changed) }
         try await catalog.removePhotos(inFolder: folderPath, except: Set(onDisk.map(\.id.rawValue)))
         return result

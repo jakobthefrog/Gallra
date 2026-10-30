@@ -129,8 +129,8 @@ struct TabContentView: View {
         switch press.key {
         case .leftArrow: tab.move(by: -1)
         case .rightArrow: tab.move(by: 1)
-        case .upArrow: viewer ? tab.move(by: -1) : tab.move(by: -tab.columns)
-        case .downArrow: viewer ? tab.move(by: 1) : tab.move(by: tab.columns)
+        case .upArrow: viewer ? tab.move(by: -1) : tab.moveVertically(-1)
+        case .downArrow: viewer ? tab.move(by: 1) : tab.moveVertically(1)
         case .space, .return: viewer ? () : tab.openViewer()
         case .escape: if viewer { tab.closeViewer() } else { return .ignored }
         default:

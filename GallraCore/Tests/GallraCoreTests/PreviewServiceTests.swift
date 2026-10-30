@@ -50,7 +50,8 @@ import ImageIO
         let photos = try FolderBrowser().photos(in: dir)
         let service = service()
         await service.prefetch(photos, size: .full)
-        for _ in 0..<100 where await service.extractions < photos.count {
+        // Generous wait: the other preview tests read big RAW files at the same time.
+        for _ in 0..<600 where await service.extractions < photos.count {
             try await Task.sleep(for: .milliseconds(100))
         }
         #expect(await service.extractions == photos.count)

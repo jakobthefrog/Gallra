@@ -31,12 +31,13 @@ public struct FolderBrowser: FolderBrowsing {
         let fm = FileManager.default
         let items = try fm.contentsOfDirectory(
             at: folder, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])
+        // All files in one folder share a volume, so ask once instead of once per file.
+        let volume = (try? folder.resourceValues(forKeys: [.volumeUUIDStringKey]).volumeUUIDString) ?? "unknown"
         var result: [Photo] = []
         for url in items {
             guard let format = RawFormat(fileExtension: url.pathExtension),
                   let attrs = try? fm.attributesOfItem(atPath: url.path),
                   (attrs[.type] as? FileAttributeType) == .typeRegular else { continue }
-            let volume = (try? url.resourceValues(forKeys: [.volumeUUIDStringKey]).volumeUUIDString) ?? "unknown"
             let id = PhotoID(volume: volume,
                              fileNumber: (attrs[.systemFileNumber] as? NSNumber)?.uint64Value ?? 0,
                              path: url.path)
