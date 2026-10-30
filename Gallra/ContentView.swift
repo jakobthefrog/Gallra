@@ -226,7 +226,7 @@ struct TabContentView: View {
         case .delete, .deleteForward: tab.rejectCurrent()
         default:
             switch press.characters.lowercased() {
-            case "z" where viewer: tab.zoom100.toggle()
+            case "z" where viewer: tab.viewerZoom.toggleActualSize(backingScale: NSScreen.main?.backingScaleFactor ?? 2)
             case "f" where viewer: tab.showFilmstrip.toggle()
             case "0", "1", "2", "3": tab.setRating(Int(press.characters)!)
             case "c": tab.openCompare()

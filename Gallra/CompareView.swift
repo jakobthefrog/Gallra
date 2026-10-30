@@ -64,6 +64,9 @@ final class CompareState {
         clamp()
     }
 
+    /// Back to the whole photo.
+    func resetZoom() { viewport.reset() }
+
     /// Z: toggle between whole photo and 100% of the active pane's photo.
     /// `at`: where to zoom in, relative to the active pane's centre in points (default: centre).
     func toggleActualSize(backingScale: CGFloat, at: CGPoint = .zero) {
@@ -158,7 +161,7 @@ private struct ComparePane: View {
 
 /// Transparent AppKit view that turns mouse, trackpad and pinch input into pan and zoom.
 /// Drag or two-finger scroll pans; pinch or Cmd+scroll zooms; Option makes the pan independent.
-private struct PaneInteraction: NSViewRepresentable {
+struct PaneInteraction: NSViewRepresentable {
     var onPan: (CGSize, Bool) -> Void
     var onZoom: (Double, CGPoint) -> Void
     var onClick: () -> Void

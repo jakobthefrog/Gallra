@@ -31,15 +31,31 @@ struct ViewerView: View {
 
     @ViewBuilder private var photoArea: some View {
         if let image {
-            if tab.zoom100 {
-                let scale = NSScreen.main?.backingScaleFactor ?? 2
-                ScrollView([.horizontal, .vertical]) {
-                    Image(nsImage: image).resizable()
-                        .frame(width: image.size.width / scale, height: image.size.height / scale)
+            let zoom = tab.viewerZoom
+            let backingScale = NSScreen.main?.backingScaleFactor ?? 2
+            GeometryReader { geo in
+                ZStack {
+                    if let layout = zoom.layout(0) {
+                        Image(nsImage: image).resizable()
+                            .frame(width: layout.size.width, height: layout.size.height)
+                            .offset(layout.shift)
+                    } else {
+                        Image(nsImage: image).resizable().scaledToFit()
+                    }
                 }
-            } else {
-                Image(nsImage: image).resizable().scaledToFit()
-                    .onTapGesture { tab.zoom100 = true }
+                .allowsHitTesting(false)   // display only; the layer below takes the mouse
+                .frame(width: geo.size.width, height: geo.size.height)
+                .clipped()
+                // Double-click zooms to 100% where you clicked (and back); drag, scroll and pinch pan and zoom.
+                .overlay {
+                    PaneInteraction(
+                        onPan: { movement, _ in zoom.pan(pane: 0, movement: movement, independent: false) },
+                        onZoom: { factor, point in zoom.zoom(pane: 0, factor: factor, at: point) },
+                        onClick: {},
+                        onDoubleClick: { zoom.toggleActualSize(backingScale: backingScale, at: $0) })
+                }
+                .onChange(of: geo.size, initial: true) { _, size in zoom.setMetrics(0, pane: size, image: image.size) }
+                .onChange(of: image) { _, new in zoom.setMetrics(0, pane: geo.size, image: new.size) }
             }
         } else {
             ProgressView().controlSize(.small)

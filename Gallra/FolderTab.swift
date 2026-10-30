@@ -47,7 +47,8 @@ final class FolderTab: Identifiable {
     var mode: Mode = .grid
     var cellSize: Double = 160
     var showFilmstrip = true
-    var zoom100 = false
+    /// Zoom and pan of the single-photo viewer (the same engine as one compare pane).
+    let viewerZoom = CompareState(paths: [""])
     /// Photos marked with Cmd-click or Shift+arrows (by path), used to pick a compare pair.
     var marked: Set<String> = []
     var compare: CompareState?
@@ -497,18 +498,18 @@ final class FolderTab: Identifiable {
         isDeselected = false
         if mode == .grid { marked = [] }
         selection = min(max(index, 0), photos.count - 1)
-        if mode == .viewer { zoom100 = false; prefetchNeighbours() }
+        if mode == .viewer { viewerZoom.resetZoom(); prefetchNeighbours() }
     }
 
     func openViewer() {
         isDeselected = false
         guard currentPhoto != nil else { return }
         mode = .viewer
-        zoom100 = false
+        viewerZoom.resetZoom()
         prefetchNeighbours()
     }
 
-    func closeViewer() { mode = .grid; zoom100 = false }
+    func closeViewer() { mode = .grid; viewerZoom.resetZoom() }
 
     // MARK: Compare
 
