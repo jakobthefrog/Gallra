@@ -7,8 +7,8 @@ Rule: one stage per chat session. Finish, tick boxes, commit, then start a fresh
 - [x] `git init` + first commit (safety net / undo for everything)
 - [x] Put 10-20 COPIES of sample files in `~/Documents/Gallra-TestPhotos/` (CR3 from R5, 3FR from X2D II, a few already rated). Never test on originals.
 - [x] Spike A: extract embedded preview from CR3 and 3FR, time it
-- [~] Spike B (engine side done; Lightroom/Phocus check by owner pending): read and write a rating inside a COPY of each format; verify image data unchanged; test that Finder/Lightroom/Phocus see it
-- [ ] Decide: in-file writing OK per format? (owner decision, see PROJECT.md)
+- [x] Spike B: read and write a rating inside a COPY of each format; verify image data unchanged; test that Finder/Lightroom/Phocus see it
+- [x] Decide: in-file writing OK per format? (owner decision, see PROJECT.md)
 - [x] Hello-world Xcode project + `GallraCore` package builds
 
 ## Stage 1: Design (Claude Design)

@@ -14,5 +14,6 @@ Tested on 20 CR3 (R5) and 11 3FR (X2D II) files, Apple Silicon Mac, Xcode 27.2.
 - Changing the digit keeps the file size identical (no offsets move). Exactly 1 byte differs from the original; setting it back gives a byte-identical file.
 - Write method tested: copy to temp file, change the digit, verify (same size, 1 byte differs, preview still decodes), atomic replace.
 - ImageIO reads the new value back for both formats.
-- NOT yet verified: do Finder, Lightroom and Phocus show the rating? Test files: `Gallra-TestPhotos/rating-test/` (both set to 3 stars).
+- Verified by owner: the rating shows up in the other apps (rated test copies in `Gallra-TestPhotos/rating-test/`).
+- Decision (owner): writing ratings into the RAW file is approved for both CR3 and 3FR.
 - Caveat: only tested on files whose rating field already exists (all 31 samples). A file without the field needs a fallback (skip with a message, or sidecar `.xmp`).
