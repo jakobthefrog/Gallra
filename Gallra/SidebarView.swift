@@ -31,7 +31,7 @@ struct SidebarView: View {
             }
             .padding(8)
         }
-        .frame(width: 160)
+        .frame(width: 220)
         .background(Theme.sidebar)
         .safeAreaInset(edge: .bottom) {
             Button("Open Folder…") { model.chooseFolder(inNewTab: false) }
