@@ -3,6 +3,16 @@
     <channel>
         <title>Gallra</title>
         <item>
+            <title>Version 1.2</title>
+            <pubDate>Fri, 30 Oct 2026 19:40:00 +0000</pubDate>
+            <sparkle:version>3</sparkle:version>
+            <sparkle:shortVersionString>1.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/jakobthefrog/Gallra/releases/download/v1.2/Gallra-1.2.zip"
+                       sparkle:edSignature="Gi0uMd9l0fcWNAKjfyTAb5ITsFuKz4Of7KjMftpQ3lWupwzVAH2uG3r2FlAN/jIOelwRkpP2UdFFT4k1WFlHAA==" length="2021215"
+                       type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 1.1</title>
             <pubDate>Fri, 30 Oct 2026 15:00:00 +0000</pubDate>
             <sparkle:version>2</sparkle:version>
