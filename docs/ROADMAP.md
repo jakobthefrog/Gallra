@@ -27,7 +27,7 @@ Rule: one stage per chat session. Finish, tick boxes, commit, then start a fresh
 - [x] Side-by-side with linked zoom and pan
 
 ## Stage 6: Scene grouping
-- [ ] Vision feature prints + time clustering, group UI
+- [x] Vision feature prints + time clustering, group UI
 
 ## Stage 7: Polish and ship
 - [ ] Performance pass on thousands of files, large-monitor layout, app icon

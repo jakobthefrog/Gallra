@@ -103,6 +103,7 @@ struct TabContentView: View {
             Text(tab.folder == nil ? "" : "\(countText) · \(tab.folder?.path ?? "")")
                 .lineLimit(1).truncationMode(.middle)
             Spacer()
+            if let (done, total) = tab.groupProgress { Text("Grouping \(done)/\(total)…") }
             if let notice = tab.notice { Text(notice).foregroundStyle(Theme.accent).lineLimit(1) }
         }
         .font(.system(size: 11).monospacedDigit()).foregroundStyle(Theme.textSecondary)
@@ -117,7 +118,7 @@ struct TabContentView: View {
 
     private func handleKey(_ press: KeyPress) -> KeyPress.Result {
         if press.modifiers == .command, press.characters.lowercased() == "z" {
-            model.undoLastReject(); return .handled
+            model.undoLast(); return .handled
         }
         guard !press.modifiers.contains(.command) else { return .ignored }
         let viewer = tab.mode == .viewer
@@ -139,6 +140,7 @@ struct TabContentView: View {
             case "0", "1", "2", "3": tab.setRating(Int(press.characters)!)
             case "x": tab.rejectCurrent()
             case "c": tab.openCompare()
+            case "g": tab.grouping.toggle()
             default: return .ignored
             }
         }

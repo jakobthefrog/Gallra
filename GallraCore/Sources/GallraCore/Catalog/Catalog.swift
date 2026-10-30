@@ -33,6 +33,10 @@ public actor Catalog {
                 size INTEGER NOT NULL, modified REAL NOT NULL,
                 capture REAL, rating INTEGER);
             CREATE INDEX IF NOT EXISTS photos_folder ON photos(folder);
+            CREATE TABLE IF NOT EXISTS prints(
+                id TEXT PRIMARY KEY, size INTEGER NOT NULL, data BLOB NOT NULL);
+            CREATE TABLE IF NOT EXISTS manual_groups(
+                path TEXT PRIMARY KEY, folder TEXT NOT NULL, group_id TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS favorites(
                 path TEXT PRIMARY KEY, position INTEGER NOT NULL);
             """)
@@ -114,6 +118,61 @@ public actor Catalog {
             bind(del, 1, id)
             sqlite3_step(del)
             sqlite3_finalize(del)
+        }
+    }
+
+    // MARK: Feature prints (scene grouping cache)
+
+    /// Cached visual fingerprint of a photo, if one was stored for a file of this size.
+    public func featurePrint(id: String, fileSize: Int64) throws -> Data? {
+        let stmt = try prepare("SELECT data FROM prints WHERE id = ? AND size = ?")
+        defer { sqlite3_finalize(stmt) }
+        bind(stmt, 1, id)
+        sqlite3_bind_int64(stmt, 2, fileSize)
+        guard sqlite3_step(stmt) == SQLITE_ROW, let bytes = sqlite3_column_blob(stmt, 0) else { return nil }
+        return Data(bytes: bytes, count: Int(sqlite3_column_bytes(stmt, 0)))
+    }
+
+    public func saveFeaturePrint(id: String, fileSize: Int64, data: Data) throws {
+        let stmt = try prepare("INSERT OR REPLACE INTO prints(id, size, data) VALUES (?,?,?)")
+        defer { sqlite3_finalize(stmt) }
+        bind(stmt, 1, id)
+        sqlite3_bind_int64(stmt, 2, fileSize)
+        _ = data.withUnsafeBytes { sqlite3_bind_blob(stmt, 3, $0.baseAddress, Int32(data.count), unsafeBitCast(-1, to: sqlite3_destructor_type.self)) }
+        guard sqlite3_step(stmt) == SQLITE_DONE else { throw lastError() }
+    }
+
+    // MARK: Hand-made scene groups
+
+    /// Photo path -> group id, for photos the user put in groups by hand in `folder`.
+    public func manualGroups(inFolder folder: String) throws -> [String: String] {
+        let stmt = try prepare("SELECT path, group_id FROM manual_groups WHERE folder = ?")
+        defer { sqlite3_finalize(stmt) }
+        bind(stmt, 1, folder)
+        var result: [String: String] = [:]
+        while sqlite3_step(stmt) == SQLITE_ROW { result[text(stmt, 0)] = text(stmt, 1) }
+        return result
+    }
+
+    /// Saves (or changes) group assignments for photos of `folder`.
+    public func setManualGroups(_ assignments: [String: String], folder: String) throws {
+        let stmt = try prepare("INSERT OR REPLACE INTO manual_groups(path, folder, group_id) VALUES (?,?,?)")
+        defer { sqlite3_finalize(stmt) }
+        for (path, group) in assignments {
+            sqlite3_reset(stmt)
+            bind(stmt, 1, path); bind(stmt, 2, folder); bind(stmt, 3, group)
+            guard sqlite3_step(stmt) == SQLITE_DONE else { throw lastError() }
+        }
+    }
+
+    /// Forgets the hand-made group of these photos (they return to automatic scenes).
+    public func removeManualGroups(paths: [String]) throws {
+        let stmt = try prepare("DELETE FROM manual_groups WHERE path = ?")
+        defer { sqlite3_finalize(stmt) }
+        for path in paths {
+            sqlite3_reset(stmt)
+            bind(stmt, 1, path)
+            guard sqlite3_step(stmt) == SQLITE_DONE else { throw lastError() }
         }
     }
 

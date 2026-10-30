@@ -10,9 +10,16 @@ final class AppModel {
     let scanner: FolderScanner?
     let browser = FolderBrowser()
     let images: ImageStore
+    let similarity: SimilarityService?
     let ratingWriter = RatingWriter()
-    /// Reject actions that can still be undone, newest last.
-    var undoStack: [MoveBatch] = []
+    /// One step Cmd+Z can reverse.
+    enum UndoStep {
+        case reject(MoveBatch)
+        /// Hand-made grouping: group ids photos had before, and photos that had none.
+        case grouping(tab: UUID, previous: [String: String], unassigned: [String])
+    }
+    /// Actions that can still be undone, newest last.
+    var undoStack: [UndoStep] = []
 
     var tabs: [FolderTab] = []
     var selectedTabID: UUID?
@@ -29,9 +36,11 @@ final class AppModel {
             let catalog = try Catalog()
             self.catalog = catalog
             scanner = FolderScanner(browser: browser, catalog: catalog)
+            similarity = SimilarityService(previews: previews, catalog: catalog)
         } catch {
             catalog = nil
             scanner = nil
+            similarity = nil
             startupError = "Could not open the photo cache: \(error)"
         }
         newTab()
@@ -83,13 +92,20 @@ final class AppModel {
         if inNewTab { openInNewTab(url) } else { open(url) }
     }
 
-    /// Puts the most recent reject action back.
-    func undoLastReject() {
-        guard let batch = undoStack.popLast() else { selectedTab?.showNotice("Nothing to undo."); return }
-        let failed = RejectService().undo(batch)
-        selectedTab?.showNotice(failed.isEmpty ? "Restored \(batch.files.count) photo(s)."
-                                               : "Could not restore: \(failed.joined(separator: ", ")).")
-        for tab in tabs { tab.reload() }
+    /// Reverses the most recent reject or grouping action.
+    func undoLast() {
+        guard let step = undoStack.popLast() else { selectedTab?.showNotice("Nothing to undo."); return }
+        switch step {
+        case .reject(let batch):
+            let failed = RejectService().undo(batch)
+            selectedTab?.showNotice(failed.isEmpty ? "Restored \(batch.files.count) photo(s)."
+                                                   : "Could not restore: \(failed.joined(separator: ", ")).")
+            for tab in tabs { tab.reload() }
+        case .grouping(let tabID, let previous, let unassigned):
+            guard let tab = tabs.first(where: { $0.id == tabID }) else { return }
+            tab.restoreGrouping(previous: previous, unassigned: unassigned)
+            tab.showNotice("Undid grouping.")
+        }
     }
 
     // MARK: Favorites

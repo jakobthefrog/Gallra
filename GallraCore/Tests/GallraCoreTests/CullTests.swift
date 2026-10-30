@@ -11,11 +11,12 @@ import Foundation
         let dir = try Scratch.folder(cr3: 1, threeFR: 1)
         let photo = try firstPhoto(dir, ext)
         let before = try Data(contentsOf: photo.url)
-        for stars in [3, 1, 0] {
+        let original = PhotoMetadataReader().read(photo.url).rating ?? 0
+        for stars in [(original + 1) % 4, (original + 2) % 4, original] {
             try RatingWriter().write(rating: stars, to: photo.url)
             #expect(PhotoMetadataReader().read(photo.url).rating == stars)
         }
-        #expect(try Data(contentsOf: photo.url) == before)   // back to 0 = identical bytes
+        #expect(try Data(contentsOf: photo.url) == before)   // back to the original rating = identical bytes
         let leftovers = try FileManager.default.contentsOfDirectory(atPath: dir.path).filter { $0.hasPrefix(".gallra-") }
         #expect(leftovers.isEmpty)
     }

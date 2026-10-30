@@ -13,7 +13,7 @@ final class FolderTab: Identifiable {
 
     var folder: URL?
     /// Every photo in the folder; `photos` is the part that passes `filter`.
-    var allPhotos: [Photo] = [] { didSet { applyFilter() } }
+    var allPhotos: [Photo] = [] { didSet { applyFilter(); if grouping { refreshScenes() } } }
     private(set) var photos: [Photo] = []
     var filter: RatingFilter = .all { didSet { applyFilter() } }
     /// Short message about the last action (shown in the status bar for a few seconds).
@@ -78,9 +78,145 @@ final class FolderTab: Identifiable {
         }
     }
 
+    // MARK: Scene grouping
+
+    /// A scene header and the part of `photos` it covers (empty range when collapsed).
+    struct SceneSection: Identifiable {
+        let id: String            // path of the scene's first photo
+        let title: String
+        let best: Int             // highest star rating in the scene
+        let collapsed: Bool
+        let range: Range<Int>
+    }
+
+    var grouping = false {
+        didSet {
+            if grouping { refreshScenes() } else { groupTask?.cancel(); groupProgress = nil }
+            applyFilter()
+        }
+    }
+    private(set) var sections: [SceneSection] = []
+    /// (done, total) while feature prints are being made.
+    var groupProgress: (Int, Int)?
+    private var scenes: [PhotoScene] = []       // automatic scenes with the user's groups applied
+    private var autoScenes: [PhotoScene] = []
+    private var manual: [String: String] = [:]  // photo path -> hand-made group id
+    private var groupedPaths: Set<String> = []
+    private var collapsed: Set<String> = []
+    private var groupTask: Task<Void, Never>?
+
+    func toggleCollapsed(_ sectionID: String) {
+        if collapsed.contains(sectionID) { collapsed.remove(sectionID) } else { collapsed.insert(sectionID) }
+        applyFilter()
+    }
+
+    /// Works out the scenes in the background (view only; no file is touched).
+    private func refreshScenes() {
+        let paths = Set(allPhotos.map(\.id.path))
+        guard let similarity = model.similarity, !paths.isEmpty, paths != groupedPaths else { return }
+        groupedPaths = paths
+        groupTask?.cancel()
+        let photos = allPhotos
+        let catalog = model.catalog
+        let folderPath = self.folderPath
+        groupTask = Task { [weak self] in
+            if let catalog, let folderPath, let saved = try? await catalog.manualGroups(inFolder: folderPath) {
+                self?.manual = saved
+            }
+            let found = await similarity.scenes(for: photos) { done, total in
+                Task { @MainActor in self?.groupProgress = done < total ? (done, total) : nil }
+            }
+            guard !Task.isCancelled, let self else { return }
+            self.groupProgress = nil
+            self.autoScenes = found
+            self.rearrange()
+        }
+    }
+
+    private func rearrange() {
+        scenes = SceneArranger.apply(manual: manual, photos: allPhotos, to: autoScenes)
+        applyFilter()
+    }
+
+    /// Undo of a grouping action: puts the earlier group assignments back.
+    func restoreGrouping(previous: [String: String], unassigned: [String]) {
+        for path in unassigned { manual[path] = nil }
+        manual.merge(previous) { _, new in new }
+        rearrange()
+        guard let folderPath else { return }
+        let catalog = model.catalog
+        Task {
+            try? await catalog?.removeManualGroups(paths: unassigned)
+            try? await catalog?.setManualGroups(previous, folder: folderPath)
+        }
+    }
+
+    /// What a drag of `photo` carries: all marked photos if it is one of them, else just itself.
+    func dragPayload(for photo: Photo) -> String {
+        let paths = marked.contains(photo.id.path) ? Array(marked) : [photo.id.path]
+        return paths.joined(separator: "\n")
+    }
+
+    /// Drop handler: moves the dragged photos into the scene `sectionID`, or into a new group (nil).
+    @discardableResult
+    func drop(_ items: [String], into sectionID: String?) -> Bool {
+        guard grouping, let folderPath else { return false }
+        let known = Set(allPhotos.map(\.id.path))
+        let moving = items.flatMap { $0.split(separator: "\n").map(String.init) }.filter(known.contains)
+        guard !moving.isEmpty else { return false }
+        var assignments: [String: String] = [:]
+        var group = UUID().uuidString
+        if let sectionID, let target = scenes.first(where: { $0.photos.first?.path == sectionID }) {
+            if Set(moving).isSubset(of: Set(target.photos.map(\.path))) { return false }   // already there
+            if let existing = target.manualID { group = existing }
+            else { for id in target.photos { assignments[id.path] = group } }   // scene becomes a hand-made group
+        }
+        for path in moving { assignments[path] = group }
+        let previous = assignments.keys.reduce(into: [String: String]()) { if let old = manual[$1] { $0[$1] = old } }
+        model.undoStack.append(.grouping(tab: id, previous: previous,
+                                         unassigned: assignments.keys.filter { manual[$0] == nil }))
+        manual.merge(assignments) { _, new in new }
+        rearrange()
+        showNotice(sectionID == nil ? "Started a new group with \(moving.count) photo\(moving.count == 1 ? "" : "s")."
+                                    : "Moved \(moving.count) photo\(moving.count == 1 ? "" : "s") to the group.")
+        let catalog = model.catalog
+        Task { try? await catalog?.setManualGroups(assignments, folder: folderPath) }
+        return true
+    }
+
     private func applyFilter() {
         let keep = currentPhoto?.id.path
-        photos = filter.apply(to: allPhotos)
+        var ordered = filter.apply(to: allPhotos)
+        sections = []
+        if grouping && !scenes.isEmpty {
+            var place: [String: (scene: Int, pos: Int)] = [:]
+            for (n, scene) in scenes.enumerated() {
+                for (pos, id) in scene.photos.enumerated() { place[id.path] = (n, pos) }
+            }
+            ordered.sort {
+                let a = place[$0.id.path] ?? (Int.max, 0), b = place[$1.id.path] ?? (Int.max, 0)
+                return a.0 != b.0 ? a.0 < b.0 : a.1 < b.1
+            }
+            var visible: [Photo] = []
+            var i = 0
+            while i < ordered.count {
+                guard let n = place[ordered[i].id.path]?.scene else { visible.append(ordered[i]); i += 1; continue }
+                var j = i
+                while j < ordered.count, place[ordered[j].id.path]?.scene == n { j += 1 }
+                let members = Array(ordered[i..<j])
+                let id = scenes[n].photos[0].path
+                let isCollapsed = collapsed.contains(id)
+                let start = visible.count
+                if !isCollapsed { visible += members }
+                var title = "Scene · \(members.count) photo\(members.count == 1 ? "" : "s")"
+                if let date = members[0].captureDate { title += " · " + date.formatted(date: .omitted, time: .shortened) }
+                sections.append(SceneSection(id: id, title: title, best: members.compactMap(\.rating).max() ?? 0,
+                                             collapsed: isCollapsed, range: start..<visible.count))
+                i = j
+            }
+            ordered = visible
+        }
+        photos = ordered
         if let keep, let index = photos.firstIndex(where: { $0.id.path == keep }) { selection = index }
         else { selection = min(selection, max(photos.count - 1, 0)) }
     }
@@ -148,7 +284,7 @@ final class FolderTab: Identifiable {
     private func reject(_ list: [Photo]) {
         guard !list.isEmpty else { return }
         let (batch, failures) = RejectService().reject(list)
-        if !batch.isEmpty { model.undoStack.append(batch) }
+        if !batch.isEmpty { model.undoStack.append(.reject(batch)) }
         let gone = Set(batch.files.map { $0.original.path })
         allPhotos.removeAll { gone.contains($0.id.path) }
         if mode == .viewer && photos.isEmpty { mode = .grid }
