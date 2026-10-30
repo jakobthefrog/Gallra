@@ -5,9 +5,9 @@ Native macOS app for fast photo culling of large RAW files (Canon `.CR3`, Hassel
 ## Install
 1. Download `Gallra-x.y.zip` from the [latest release](https://github.com/jakobthefrog/Gallra/releases/latest) and unzip it.
 2. Drag `Gallra.app` to your Applications folder.
-3. **First launch:** Gallra is not notarized by Apple, so macOS will say it can't be opened. Either
-   - right-click `Gallra.app`, choose **Open**, then **Open** again; or
-   - open **System Settings → Privacy & Security**, scroll down, and click **Open Anyway** next to Gallra.
+3. **First launch:** Gallra is not notarized by Apple, so macOS will say it can't be opened. On macOS 15 or newer:
+   - Try to open it once and click **Done**, then open **System Settings → Privacy & Security**, scroll down, and click **Open Anyway** next to Gallra; or
+   - run `xattr -dr com.apple.quarantine /Applications/Gallra.app` in Terminal.
 
    You only need to do this once. After that, updates arrive inside the app (**Gallra → Check for Updates…**).
 

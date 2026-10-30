@@ -15,7 +15,7 @@ struct WelcomeView: View {
                 line("Press X to move a photo to a \"Gallra Rejected\" folder next to it. Nothing is deleted; Cmd+Z undoes it.")
                 line("Gallra changes your files in only those two ways.")
             }
-            Text("Gallra is not notarized by Apple. If macOS blocks a new version, right-click the app and choose Open, or allow it in System Settings → Privacy & Security.")
+            Text("Gallra is not notarized by Apple. If macOS blocks a new version, allow it under System Settings → Privacy & Security → Open Anyway.")
                 .font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
             HStack { Spacer(); Button("Get started", action: dismiss).keyboardShortcut(.defaultAction) }
         }
