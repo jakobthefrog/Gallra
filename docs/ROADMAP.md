@@ -12,7 +12,7 @@ Rule: one stage per chat session. Finish, tick boxes, commit, then start a fresh
 - [x] Hello-world Xcode project + `GallraCore` package builds
 
 ## Stage 1: Design (Claude Design)
-- [ ] Style direction, colors, type, spacing, key screens (grid, viewer, compare); save in `docs/DESIGN.md`
+- [x] Style direction, colors, type, spacing, key screens (grid, viewer, compare); save in `docs/DESIGN.md`
 
 ## Stage 2: Engine foundation
 - [ ] Models, FolderBrowser, Catalog (SQLite), PreviewService with caching + prefetch, tests
