@@ -32,6 +32,9 @@ struct GridView: View {
                     .padding(gap)
                     .frame(maxWidth: .infinity)
                 }
+                // Cells handle their own taps first, so this only fires on empty space.
+                .contentShape(Rectangle())
+                .onTapGesture { tab.deselect() }
                 .onChange(of: tab.selection) { _, new in
                     if tab.photos.indices.contains(new) { proxy.scrollTo(tab.photos[new].id) }
                 }
@@ -54,7 +57,7 @@ extension GridView {
         if tab.photos.indices.contains(index) {
             let photo = tab.photos[index]
             VStack(spacing: 3) {
-                ThumbnailView(photo: photo, size: tab.cellSize, isSelected: index == tab.selection,
+                ThumbnailView(photo: photo, size: tab.cellSize, isSelected: index == tab.selection && !tab.isDeselected,
                               isMarked: tab.marked.contains(photo.id.path))
                 if showCardDetails { CardCaption(photo: photo, width: tab.cellSize) }
             }

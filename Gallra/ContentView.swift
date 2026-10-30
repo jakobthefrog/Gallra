@@ -124,6 +124,14 @@ struct TabContentView: View {
                 .disabled(tab.unratedInView.isEmpty)
                 .controlSize(.small)
             Spacer()
+            Button { tab.mode == .compare ? tab.closeCompare() : tab.openCompare() } label: {
+                Image(systemName: "square.split.2x1")
+            }
+            .controlSize(.small)
+            .tint(tab.mode == .compare ? Theme.accent : nil)
+            .buttonStyle(.bordered)
+            .help("Compare two photos side by side (C)")
+            .accessibilityLabel("Compare")
             Picker("Thumbnail view", selection: $showCardDetails) {
                 Image(systemName: "square.grid.2x2").tag(false).help("Thumbnails only")
                 Image(systemName: "rectangle.grid.1x2").tag(true).help("Cards with file name and camera settings")
@@ -195,7 +203,7 @@ struct TabContentView: View {
         case .upArrow: viewer ? tab.move(by: -1) : tab.moveVertically(-1)
         case .downArrow: viewer ? tab.move(by: 1) : tab.moveVertically(1)
         case .space, .return: viewer ? () : tab.openViewer()
-        case .escape: if viewer { tab.closeViewer() } else { return .ignored }
+        case .escape: if viewer { tab.closeViewer() } else { tab.deselect() }
         case .delete, .deleteForward: tab.rejectCurrent()
         default:
             switch press.characters.lowercased() {

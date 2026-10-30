@@ -35,6 +35,9 @@ final class FolderTab: Identifiable {
     var isLoading = false
     var errorMessage: String?
     var selection = 0 { didSet { if selection != oldValue { loadCameraInfo() } } }
+    /// True after a click on empty space or Esc: no photo is selected, though `selection` remembers
+    /// where it was so arrow keys carry on from there. Rating and reject keys do nothing then.
+    private(set) var isDeselected = false { didSet { if isDeselected != oldValue { loadCameraInfo() } } }
     /// Shooting details of the selected photo (empty until read).
     private(set) var cameraInfo = CameraInfo()
     private var cameraTask: Task<Void, Never>?
@@ -51,7 +54,7 @@ final class FolderTab: Identifiable {
 
     var folderPath: String? { folder.map(FolderScanner.canonicalPath) }
     var title: String { folder?.lastPathComponent ?? "New Tab" }
-    var currentPhoto: Photo? { photos.indices.contains(selection) ? photos[selection] : nil }
+    var currentPhoto: Photo? { !isDeselected && photos.indices.contains(selection) ? photos[selection] : nil }
 
     init(model: AppModel) { self.model = model }
 
@@ -398,14 +401,22 @@ final class FolderTab: Identifiable {
         }
     }
 
+    /// Clears the selection and any marks (click on empty grid space, or Esc).
+    func deselect() {
+        marked = []
+        isDeselected = true
+    }
+
     func select(_ index: Int) {
         guard !photos.isEmpty else { return }
+        isDeselected = false
         if mode == .grid { marked = [] }
         selection = min(max(index, 0), photos.count - 1)
         if mode == .viewer { zoom100 = false; prefetchNeighbours() }
     }
 
     func openViewer() {
+        isDeselected = false
         guard currentPhoto != nil else { return }
         mode = .viewer
         zoom100 = false
@@ -426,6 +437,7 @@ final class FolderTab: Identifiable {
     }
 
     func openCompare() {
+        isDeselected = false
         guard let pair = comparePair else { showNotice("Need at least two photos to compare."); return }
         compare = CompareState(paths: pair.map(\.id.path))
         mode = .compare
@@ -436,6 +448,7 @@ final class FolderTab: Identifiable {
     /// Cmd-click: add or remove a photo from the marked set.
     func toggleMark(_ index: Int) {
         guard photos.indices.contains(index) else { return }
+        isDeselected = false
         // Make sure the previously selected photo counts as the first mark.
         if marked.isEmpty, let current = currentPhoto { marked.insert(current.id.path) }
         let path = photos[index].id.path
@@ -445,7 +458,7 @@ final class FolderTab: Identifiable {
 
     /// Shift+arrow: move the selection and mark both the old and the new photo.
     func extendMark(by delta: Int) {
-        guard let from = currentPhoto else { return }
+        guard let from = currentPhoto else { move(by: delta); return }
         marked.insert(from.id.path)
         move(by: delta)
         if let to = currentPhoto { marked.insert(to.id.path) }
