@@ -88,24 +88,29 @@ public actor PreviewService {
     // MARK: Internals
 
     private func cacheKey(_ photo: Photo, _ size: PreviewSize) -> String {
-        let raw = "\(photo.id.rawValue)|\(photo.modified.timeIntervalSince1970)|\(photo.fileSize)|\(size.rawValue)"
+        let raw = "v2|\(photo.id.rawValue)|\(photo.modified.timeIntervalSince1970)|\(photo.fileSize)|\(size.rawValue)"
         return SHA256.hash(data: Data(raw.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+
+    nonisolated private static func longEdge(of source: CGImageSource) -> Int {
+        let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
+        let w = props?[kCGImagePropertyPixelWidth] as? Int ?? 0
+        let h = props?[kCGImagePropertyPixelHeight] as? Int ?? 0
+        return max(w, h, 1)
     }
 
     /// Reads the embedded preview and encodes it as JPEG, downscaled if `maxPixel` is set.
     nonisolated static func extract(from url: URL, maxPixel: Int?) throws -> Data {
         let options = [kCGImageSourceShouldCache: false] as CFDictionary
         guard let source = CGImageSourceCreateWithURL(url as CFURL, options) else { throw PreviewError.cannotRead }
-        let image: CGImage?
-        if let maxPixel {
-            image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
-                kCGImageSourceCreateThumbnailFromImageIfAbsent: true,
-                kCGImageSourceCreateThumbnailWithTransform: true,
-                kCGImageSourceThumbnailMaxPixelSize: maxPixel,
-            ] as CFDictionary)
-        } else {
-            image = CGImageSourceCreateImageAtIndex(source, 0, options)
-        }
+        // Both sizes go through the thumbnail call because it applies the photo's orientation
+        // (portraits upright). For the full size the limit is the image's own long edge.
+        let limit = maxPixel ?? PreviewService.longEdge(of: source)
+        let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+            kCGImageSourceCreateThumbnailFromImageIfAbsent: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: limit,
+        ] as CFDictionary)
         guard let image else { throw PreviewError.cannotRead }
 
         let data = NSMutableData()

@@ -28,6 +28,27 @@ import ImageIO
         }
     }
 
+    @Test func fullPreviewHasSameOrientationAsThumbnail() async throws {
+        let dir = try Scratch.folder(cr3: 12, threeFR: 3)
+        let service = service()
+        var portraits = 0
+        for photo in try FolderBrowser().photos(in: dir) {
+            let full = try #require(pixelSize(try await service.preview(for: photo, size: .full)))
+            let thumb = try #require(pixelSize(try await service.preview(for: photo, size: .thumbnail)))
+            #expect((full.0 > full.1) == (thumb.0 > thumb.1), "\(photo.fileName) is sideways in full size")
+            if thumb.1 > thumb.0 { portraits += 1 }
+        }
+        #expect(portraits > 0, "sample folder has no portrait photo to check")
+    }
+
+    private func pixelSize(_ data: Data) -> (Int, Int)? {
+        guard let src = CGImageSourceCreateWithData(data as CFData, nil),
+              let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [CFString: Any],
+              let w = props[kCGImagePropertyPixelWidth] as? Int, let h = props[kCGImagePropertyPixelHeight] as? Int
+        else { return nil }
+        return (w, h)
+    }
+
     @Test func secondRequestHitsMemoryThenDisk() async throws {
         let dir = try Scratch.folder(cr3: 1, threeFR: 0)
         let photo = try #require(try FolderBrowser().photos(in: dir).first)
