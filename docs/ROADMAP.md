@@ -15,7 +15,7 @@ Rule: one stage per chat session. Finish, tick boxes, commit, then start a fresh
 - [x] Style direction, colors, type, spacing, key screens (grid, viewer, compare); save in `docs/DESIGN.md`
 
 ## Stage 2: Engine foundation
-- [ ] Models, FolderBrowser, Catalog (SQLite), PreviewService with caching + prefetch, tests
+- [x] Models, FolderBrowser, Catalog (SQLite), PreviewService with caching + prefetch, tests
 
 ## Stage 3: Core app shell
 - [ ] Sidebar + favorites, tabs, thumbnail grid with magnify slider, single-photo viewer, keyboard navigation
