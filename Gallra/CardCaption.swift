@@ -2,7 +2,7 @@ import SwiftUI
 import GallraCore
 
 /// Remembers camera info already read, so scrolling back doesn't re-read files.
-@MainActor private enum CameraInfoCache {
+@MainActor enum CameraInfoCache {
     static var values: [String: CameraInfo] = [:]
 }
 

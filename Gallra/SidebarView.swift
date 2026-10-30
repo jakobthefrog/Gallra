@@ -9,10 +9,14 @@ struct SidebarView: View {
     private var locations: [URL] {
         var roots = [FileManager.default.homeDirectoryForCurrentUser]
         let volumes = (try? FileManager.default.contentsOfDirectory(
-            at: URL(fileURLWithPath: "/Volumes"), includingPropertiesForKeys: nil,
+            at: URL(fileURLWithPath: "/Volumes"), includingPropertiesForKeys: [.volumeIsBrowsableKey],
             options: [.skipsHiddenFiles])) ?? []
-        // The boot volume shows up in /Volumes as a symlink to "/"; skip it.
-        roots += volumes.filter { $0.resolvingSymlinksInPath().path != "/" }
+        // The boot volume shows up in /Volumes as a symlink to "/"; skip it. Also skip volumes
+        // Finder hides, such as the macOS Recovery partition.
+        roots += volumes.filter {
+            $0.resolvingSymlinksInPath().path != "/"
+                && (try? $0.resourceValues(forKeys: [.volumeIsBrowsableKey]).volumeIsBrowsable) != false
+        }
         return roots
     }
 

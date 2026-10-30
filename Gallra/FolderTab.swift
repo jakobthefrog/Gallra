@@ -231,8 +231,10 @@ final class FolderTab: Identifiable {
     private func loadCameraInfo() {
         cameraTask?.cancel()
         guard let url = currentPhoto?.url else { cameraInfo = CameraInfo(); return }
+        if let hit = CameraInfoCache.values[url.path] { cameraInfo = hit; return }
         cameraTask = Task { [weak self] in
             let info = await Task.detached { PhotoMetadataReader().cameraInfo(url) }.value
+            CameraInfoCache.values[url.path] = info
             if !Task.isCancelled { self?.cameraInfo = info }
         }
     }

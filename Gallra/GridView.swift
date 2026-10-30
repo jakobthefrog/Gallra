@@ -59,8 +59,13 @@ extension GridView {
                 if showCardDetails { CardCaption(photo: photo, width: tab.cellSize) }
             }
                 .id(photo.id)
-                .onTapGesture(count: 2) { tab.select(index); tab.openViewer() }
-                .onTapGesture { NSEvent.modifierFlags.contains(.command) ? tab.toggleMark(index) : tab.select(index) }
+                // One tap handler, not a separate double-tap one: SwiftUI would hold back the single
+                // click until the double-click window passed. The click count tells us which it is.
+                .onTapGesture {
+                    if NSApp.currentEvent?.clickCount ?? 1 >= 2 { tab.select(index); tab.openViewer() }
+                    else if NSEvent.modifierFlags.contains(.command) { tab.toggleMark(index) }
+                    else { tab.select(index) }
+                }
                 .draggable(tab.dragPayload(for: photo))
                 .dropDestination(for: String.self) { items, _ in
                     guard let section else { return false }
