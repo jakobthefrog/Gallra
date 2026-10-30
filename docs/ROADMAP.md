@@ -3,13 +3,13 @@
 Rule: one stage per chat session. Finish, tick boxes, commit, then start a fresh session for the next stage.
 
 ## Stage 0: Setup and risk spike (do first)
-- [ ] Install Xcode (App Store, free, ~10 GB). Open it once and accept the license.
-- [ ] `git init` + first commit (safety net / undo for everything)
-- [ ] Put 10-20 COPIES of sample files in `~/Documents/Gallra-TestPhotos/` (CR3 from R5, 3FR from X2D II, a few already rated). Never test on originals.
-- [ ] Spike A: extract embedded preview from CR3 and 3FR, time it
-- [ ] Spike B: read and write a rating inside a COPY of each format; verify image data unchanged; test that Finder/Lightroom/Phocus see it
+- [x] Install Xcode (App Store, free, ~10 GB). Open it once and accept the license.
+- [x] `git init` + first commit (safety net / undo for everything)
+- [x] Put 10-20 COPIES of sample files in `~/Documents/Gallra-TestPhotos/` (CR3 from R5, 3FR from X2D II, a few already rated). Never test on originals.
+- [x] Spike A: extract embedded preview from CR3 and 3FR, time it
+- [~] Spike B (engine side done; Lightroom/Phocus check by owner pending): read and write a rating inside a COPY of each format; verify image data unchanged; test that Finder/Lightroom/Phocus see it
 - [ ] Decide: in-file writing OK per format? (owner decision, see PROJECT.md)
-- [ ] Hello-world Xcode project + `GallraCore` package builds
+- [x] Hello-world Xcode project + `GallraCore` package builds
 
 ## Stage 1: Design (Claude Design)
 - [ ] Style direction, colors, type, spacing, key screens (grid, viewer, compare); save in `docs/DESIGN.md`
