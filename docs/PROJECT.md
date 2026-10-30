@@ -11,7 +11,7 @@ A native Mac app for fast, stable photo culling. Clean, uncluttered, inspired by
 ## Features
 1. Instant previews of large RAW files
 2. Star rating (1-3 stars) of RAW files
-3. Move unwanted RAW files into a folder inside the source folder (e.g. `Gallra Rejected`) so the user deletes them outside the app. Never delete from within the app.
+3. Move unwanted RAW files into a folder inside the source folder (e.g. `Gallra Rejected`) so the user deletes them outside the app. Never delete from within the app. Also offer a one-step "move all unrated (no stars) files" action on the current filter, into the same folder, with undo.
 4. Write star grades into the RAW file itself (no sidecar). See "Rating write notes" below.
 5. Library sidebar to browse all local folders on the Mac
 6. Mark folders as favorites
