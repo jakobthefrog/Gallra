@@ -44,6 +44,7 @@ struct TabContentView: View {
     @Environment(AppModel.self) private var model
     @FocusState private var focused: Bool
     @State private var confirmUnrated = false
+    @AppStorage("showCardDetails") private var showCardDetails = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -113,6 +114,12 @@ struct TabContentView: View {
                 .disabled(tab.unratedInView.isEmpty)
                 .controlSize(.small)
             Spacer()
+            Picker("Thumbnail view", selection: $showCardDetails) {
+                Image(systemName: "square.grid.2x2").tag(false).help("Thumbnails only")
+                Image(systemName: "rectangle.grid.1x2").tag(true).help("Cards with file name and camera settings")
+            }
+            .pickerStyle(.segmented).labelsHidden().frame(width: 70).controlSize(.small)
+            .accessibilityLabel("Thumbnail view")
             Image(systemName: "photo").font(.system(size: 10)).foregroundStyle(Theme.textSecondary)
             Slider(value: $tab.cellSize, in: 80...400).frame(width: 140).tint(Theme.accent)
                 .accessibilityLabel("Thumbnail size")

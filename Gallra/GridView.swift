@@ -6,6 +6,7 @@ struct GridView: View {
     let tab: FolderTab
     private let gap: Double = 3
     @State private var pinchBase: Double?
+    @AppStorage("showCardDetails") private var showCardDetails = false
 
     var body: some View {
         GeometryReader { geo in
@@ -52,8 +53,11 @@ extension GridView {
     @ViewBuilder fileprivate func cell(_ index: Int, in section: FolderTab.SceneSection?) -> some View {
         if tab.photos.indices.contains(index) {
             let photo = tab.photos[index]
-            ThumbnailView(photo: photo, size: tab.cellSize, isSelected: index == tab.selection,
-                          isMarked: tab.marked.contains(photo.id.path))
+            VStack(spacing: 3) {
+                ThumbnailView(photo: photo, size: tab.cellSize, isSelected: index == tab.selection,
+                              isMarked: tab.marked.contains(photo.id.path))
+                if showCardDetails { CardCaption(photo: photo, width: tab.cellSize) }
+            }
                 .id(photo.id)
                 .onTapGesture(count: 2) { tab.select(index); tab.openViewer() }
                 .onTapGesture { NSEvent.modifierFlags.contains(.command) ? tab.toggleMark(index) : tab.select(index) }
