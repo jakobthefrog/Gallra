@@ -58,6 +58,11 @@ private struct SectionTitle: View {
     }
 }
 
+/// Remembers subfolder lists already read, so expanding again is instant.
+@MainActor private enum SubfolderCache {
+    static var values: [String: [FolderNode]] = [:]
+}
+
 /// A folder row: disclosure arrow, icon, name, photo count, favorite star on hover.
 private struct FolderRow: View {
     let url: URL
@@ -102,10 +107,14 @@ private struct FolderRow: View {
             .background((isCurrent || hovering) ? Theme.hover : .clear, in: RoundedRectangle(cornerRadius: 6))
             .contentShape(Rectangle())
             .onHover { hovering = $0 }
-            .onTapGesture(count: 2) { model.openInNewTab(url) }
+            // One handler for click and double-click: a separate double-tap gesture makes SwiftUI
+            // hold back every click (including the arrow) until the double-click window passes.
             .onTapGesture {
-                if NSEvent.modifierFlags.contains(.command) { model.openInNewTab(url) } else { model.open(url) }
+                if NSApp.currentEvent?.clickCount ?? 1 >= 2 || NSEvent.modifierFlags.contains(.command) {
+                    model.openInNewTab(url)
+                } else { model.open(url) }
             }
+            .contextMenu { Button("Open in New Tab") { model.openInNewTab(url) } }
             .task { await loadCount() }
 
             if expanded {
@@ -118,18 +127,21 @@ private struct FolderRow: View {
 
     private func toggle() {
         expanded.toggle()
-        if expanded {
-            let browser = model.browser
-            let folder = url
-            Task {
-                children = await Task.detached { (try? browser.subfolders(of: folder)) ?? [] }.value
-            }
+        guard expanded else { return }
+        // Show the last list at once (if we've seen this folder), then refresh it.
+        if let known = SubfolderCache.values[url.path] { children = known }
+        let browser = model.browser
+        let folder = url
+        Task {
+            let fresh = await Task.detached(priority: .userInitiated) { (try? browser.subfolders(of: folder)) ?? [] }.value
+            SubfolderCache.values[folder.path] = fresh
+            children = fresh
         }
     }
 
     private func loadCount() async {
         let browser = model.browser
         let folder = url
-        count = await Task.detached { (try? browser.photos(in: folder))?.count }.value
+        count = await Task.detached(priority: .utility) { (try? browser.photos(in: folder))?.count }.value
     }
 }
