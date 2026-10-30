@@ -101,7 +101,7 @@ Sidebar is collapsible (Cmd+Ctrl+S). On large monitors the content area grows; s
 
 ### 5. Cull actions
 - Rating: keys 1, 2, 3, 0 to clear. Stars update instantly; the file write is background and a tiny spinner appears on the badge until it is verified. A failed write shows `reject`-colored badge and a message.
-- Reject: key X moves the photo to the `Gallra Rejected` folder in the source folder. A toast at the bottom: "Moved 1 photo to Rejected · Undo (Cmd+Z)" for 8 s.
+- Reject: the Delete key moves the photo to the `Gallra Rejected` folder in the source folder. A toast at the bottom: "Moved 1 photo to Rejected · Undo (Cmd+Z)" for 8 s.
 - Move all unrated: a button in the filter bar, enabled for the current filter. Opens a dialog: "Move 63 unrated photos to Gallra Rejected? Nothing is deleted. You can undo." Buttons: Cancel, Move (default is Cancel). Followed by the same undo toast.
 - Files with no rating field count as unrated.
 
@@ -117,7 +117,7 @@ Sidebar is collapsible (Cmd+Ctrl+S). On large monitors the content area grows; s
 | Space / Return | Open viewer |
 | Esc | Back to grid / exit compare |
 | 1 2 3 / 0 | Set / clear rating |
-| X | Move to Rejected |
+| Delete | Move to Rejected |
 | C | Compare selected two |
 | Z | Toggle 100% zoom |
 | I | Toggle EXIF strip |
@@ -141,5 +141,5 @@ Sidebar is collapsible (Cmd+Ctrl+S). On large monitors the content area grows; s
 - Accent is dark orange (changed from blue in round 2).
 - Look is dense pro-tool style, mockups approved for grid, viewer, sidebar and tabs.
 - Palette follows the Claude desktop app dark mode (warm grays).
-- Reject key is X only.
+- Reject key is Delete only.
 - Viewer filmstrip is on by default, current photo highlighted.

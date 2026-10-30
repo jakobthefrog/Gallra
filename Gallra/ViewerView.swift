@@ -53,12 +53,6 @@ struct ViewerView: View {
                     .font(.system(size: 15, weight: .medium)).foregroundStyle(Theme.textPrimary)
                     .padding(8).background(.black.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
                 Spacer()
-                if !tab.cameraInfo.summary.isEmpty {
-                    Text(tab.cameraInfo.summary)
-                        .font(.system(size: 11).monospacedDigit()).foregroundStyle(Theme.textSecondary)
-                        .padding(.horizontal, 8).padding(.vertical, 4)
-                        .background(.black.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
-                }
             }
             Spacer()
             Text("\(tab.selection + 1) / \(tab.photos.count)")
@@ -67,7 +61,44 @@ struct ViewerView: View {
                 .background(.black.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
         }
         .padding(12)
+        .overlay(alignment: .bottomLeading) { cameraPanel.padding(12) }
         .allowsHitTesting(false)
+    }
+
+    /// Small semi-transparent card with the shooting details of the current photo.
+    @ViewBuilder private var cameraPanel: some View {
+        let info = tab.cameraInfo
+        let rows: [(String, String)] = [
+            ("Lens", info.lens.map(Self.cleanLens)),
+            ("Focal length", info.focalLength.map { "\(Int($0.rounded())) mm" }),
+            ("Aperture", info.aperture.map { "f/" + Self.number($0) }),
+            ("Shutter", info.shutter.flatMap { $0 > 0 ? ($0 >= 1 ? Self.number($0) + " s" : "1/\(Int((1 / $0).rounded())) s") : nil }),
+            ("ISO", info.iso.map(String.init)),
+        ].compactMap { label, value in value.map { (label, $0) } }
+        if !rows.isEmpty {
+            VStack(alignment: .leading, spacing: 3) {
+                ForEach(rows, id: \.0) { label, value in
+                    HStack(spacing: 10) {
+                        Text(label).foregroundStyle(Theme.textSecondary)
+                        Spacer(minLength: 16)
+                        Text(value).foregroundStyle(Theme.textPrimary)
+                    }
+                }
+            }
+            .font(.system(size: 11).monospacedDigit())
+            .fixedSize()   // as wide as the longest line (usually the lens name)
+            .padding(.horizontal, 10).padding(.vertical, 8)
+            .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 8))
+        }
+    }
+
+    /// Hasselblad lenses report "XCD 35-100E@35"; drop the "@35" since focal length has its own row.
+    private static func cleanLens(_ name: String) -> String {
+        name.replacingOccurrences(of: #"\s*@\s*[\d.,]+$"#, with: "", options: .regularExpression)
+    }
+
+    private static func number(_ value: Double) -> String {
+        value == value.rounded() ? String(Int(value)) : String(format: "%.1f", value)
     }
 
     private var starText: String {

@@ -186,12 +186,12 @@ struct TabContentView: View {
         case .downArrow: viewer ? tab.move(by: 1) : tab.moveVertically(1)
         case .space, .return: viewer ? () : tab.openViewer()
         case .escape: if viewer { tab.closeViewer() } else { return .ignored }
+        case .delete, .deleteForward: tab.rejectCurrent()
         default:
             switch press.characters.lowercased() {
             case "z" where viewer: tab.zoom100.toggle()
             case "f" where viewer: tab.showFilmstrip.toggle()
             case "0", "1", "2", "3": tab.setRating(Int(press.characters)!)
-            case "x": tab.rejectCurrent()
             case "c": tab.openCompare()
             case "g": tab.grouping.toggle()
             default: return .ignored
@@ -204,10 +204,10 @@ struct TabContentView: View {
         guard let compare = tab.compare else { return .ignored }
         if press.key == .escape { tab.closeCompare(); return .handled }
         if press.key == .tab { compare.active = 1 - compare.active; return .handled }
+        if press.key == .delete || press.key == .deleteForward { tab.rejectCurrent(); return .handled }
         switch press.characters.lowercased() {
         case "z": compare.toggleActualSize(backingScale: NSScreen.main?.backingScaleFactor ?? 2)
         case "0", "1", "2", "3": tab.setRating(Int(press.characters)!)
-        case "x": tab.rejectCurrent()
         default: return .ignored
         }
         return .handled
