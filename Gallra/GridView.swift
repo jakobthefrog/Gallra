@@ -15,10 +15,11 @@ struct GridView: View {
                     LazyVGrid(columns: Array(repeating: GridItem(.fixed(tab.cellSize), spacing: gap), count: cols),
                               spacing: gap) {
                         ForEach(Array(tab.photos.enumerated()), id: \.element.id) { index, photo in
-                            ThumbnailView(photo: photo, size: tab.cellSize, isSelected: index == tab.selection)
+                            ThumbnailView(photo: photo, size: tab.cellSize, isSelected: index == tab.selection,
+                                          isMarked: tab.marked.contains(photo.id.path))
                                 .id(photo.id)
                                 .onTapGesture(count: 2) { tab.select(index); tab.openViewer() }
-                                .onTapGesture { tab.select(index) }
+                                .onTapGesture { NSEvent.modifierFlags.contains(.command) ? tab.toggleMark(index) : tab.select(index) }
                         }
                     }
                     .padding(gap)

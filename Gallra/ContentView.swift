@@ -65,6 +65,8 @@ struct TabContentView: View {
             message("No supported photos in this folder.")
         } else if tab.photos.isEmpty {
             message("No photos match this filter.")
+        } else if tab.mode == .compare, let compare = tab.compare {
+            CompareView(tab: tab, state: compare)
         } else if tab.mode == .viewer {
             ViewerView(tab: tab)
         } else {
@@ -119,6 +121,10 @@ struct TabContentView: View {
         }
         guard !press.modifiers.contains(.command) else { return .ignored }
         let viewer = tab.mode == .viewer
+        if tab.mode == .compare { return handleCompareKey(press) }
+        if press.modifiers == .shift, press.key == .leftArrow || press.key == .rightArrow, !viewer {
+            tab.extendMark(by: press.key == .leftArrow ? -1 : 1); return .handled
+        }
         switch press.key {
         case .leftArrow: tab.move(by: -1)
         case .rightArrow: tab.move(by: 1)
@@ -132,8 +138,22 @@ struct TabContentView: View {
             case "f" where viewer: tab.showFilmstrip.toggle()
             case "0", "1", "2", "3": tab.setRating(Int(press.characters)!)
             case "x": tab.rejectCurrent()
+            case "c": tab.openCompare()
             default: return .ignored
             }
+        }
+        return .handled
+    }
+
+    private func handleCompareKey(_ press: KeyPress) -> KeyPress.Result {
+        guard let compare = tab.compare else { return .ignored }
+        if press.key == .escape { tab.closeCompare(); return .handled }
+        if press.key == .tab { compare.active = 1 - compare.active; return .handled }
+        switch press.characters.lowercased() {
+        case "z": compare.toggleActualSize(backingScale: NSScreen.main?.backingScaleFactor ?? 2)
+        case "0", "1", "2", "3": tab.setRating(Int(press.characters)!)
+        case "x": tab.rejectCurrent()
+        default: return .ignored
         }
         return .handled
     }

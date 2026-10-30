@@ -6,6 +6,7 @@ struct ThumbnailView: View {
     let photo: Photo
     let size: Double
     let isSelected: Bool
+    var isMarked = false
     @Environment(AppModel.self) private var model
     @State private var image: NSImage?
     @State private var failed = false
@@ -42,7 +43,8 @@ struct ThumbnailView: View {
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 4))
-        .overlay { if isSelected { RoundedRectangle(cornerRadius: 4).stroke(Theme.accent, lineWidth: 2) } }
+        .overlay { if isSelected || isMarked { RoundedRectangle(cornerRadius: 4).stroke(Theme.accent, lineWidth: isSelected ? 2 : 1).opacity(isSelected ? 1 : 0.7) } }
+        .overlay(alignment: .topTrailing) { if isMarked { Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.accent).padding(4) } }
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.12), value: isSelected)
         .task(id: photo.id) {

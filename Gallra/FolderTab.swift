@@ -5,7 +5,7 @@ import GallraCore
 @MainActor
 @Observable
 final class FolderTab: Identifiable {
-    enum Mode { case grid, viewer }
+    enum Mode { case grid, viewer, compare }
 
     let id = UUID()
     private unowned let model: AppModel
@@ -27,6 +27,9 @@ final class FolderTab: Identifiable {
     var cellSize: Double = 160
     var showFilmstrip = true
     var zoom100 = false
+    /// Photos marked with Cmd-click or Shift+arrows (by path), used to pick a compare pair.
+    var marked: Set<String> = []
+    var compare: CompareState?
 
     /// Number of columns last laid out by the grid (set by the view, used for up/down keys).
     var columns = 1
@@ -96,7 +99,7 @@ final class FolderTab: Identifiable {
     /// Sets the current photo's star rating (0 clears). Shown at once; written to the file in
     /// the background, one write at a time. Put back with a message if the write fails.
     func setRating(_ stars: Int) {
-        guard let photo = currentPhoto, photo.rating != stars else { return }
+        guard let photo = targetPhoto, photo.rating != stars else { return }
         update(photo.id.path) { $0.rating = stars }
         let writer = model.ratingWriter
         let previous = photo.rating
@@ -125,8 +128,16 @@ final class FolderTab: Identifiable {
 
     /// Moves the current photo to the Rejected folder (undo with Cmd+Z).
     func rejectCurrent() {
-        guard let photo = currentPhoto else { return }
+        guard let photo = targetPhoto else { return }
         reject([photo])
+    }
+
+    /// The photo that rating and reject keys act on: the active compare pane, else the current photo.
+    private var targetPhoto: Photo? {
+        if mode == .compare, let compare {
+            return allPhotos.first { $0.id.path == compare.paths[compare.active] }
+        }
+        return currentPhoto
     }
 
     /// Photos in the current view that have no stars.
@@ -141,6 +152,8 @@ final class FolderTab: Identifiable {
         let gone = Set(batch.files.map { $0.original.path })
         allPhotos.removeAll { gone.contains($0.id.path) }
         if mode == .viewer && photos.isEmpty { mode = .grid }
+        if mode == .compare { closeCompare() }
+        marked.subtract(gone)
         var text = "Moved \(batch.files.count) to \(FolderBrowser.rejectedFolderName). Cmd+Z to undo."
         if !failures.isEmpty { text += " \(failures.count) could not be moved." }
         showNotice(text)
@@ -156,6 +169,7 @@ final class FolderTab: Identifiable {
 
     func select(_ index: Int) {
         guard !photos.isEmpty else { return }
+        if mode == .grid { marked = [] }
         selection = min(max(index, 0), photos.count - 1)
         if mode == .viewer { zoom100 = false; prefetchNeighbours() }
     }
@@ -168,6 +182,43 @@ final class FolderTab: Identifiable {
     }
 
     func closeViewer() { mode = .grid; zoom100 = false }
+
+    // MARK: Compare
+
+    /// Marked photos if exactly two are marked, else the current photo and its neighbour.
+    private var comparePair: [Photo]? {
+        let picked = photos.filter { marked.contains($0.id.path) }
+        if picked.count == 2 { return picked }
+        guard photos.count >= 2, let current = currentPhoto else { return nil }
+        let other = selection + 1 < photos.count ? photos[selection + 1] : photos[selection - 1]
+        return [current, other].sorted { photos.firstIndex(of: $0)! < photos.firstIndex(of: $1)! }
+    }
+
+    func openCompare() {
+        guard let pair = comparePair else { showNotice("Need at least two photos to compare."); return }
+        compare = CompareState(paths: pair.map(\.id.path))
+        mode = .compare
+    }
+
+    func closeCompare() { compare = nil; mode = .grid }
+
+    /// Cmd-click: add or remove a photo from the marked set.
+    func toggleMark(_ index: Int) {
+        guard photos.indices.contains(index) else { return }
+        // Make sure the previously selected photo counts as the first mark.
+        if marked.isEmpty, let current = currentPhoto { marked.insert(current.id.path) }
+        let path = photos[index].id.path
+        if marked.contains(path) { marked.remove(path) } else { marked.insert(path) }
+        selection = index
+    }
+
+    /// Shift+arrow: move the selection and mark both the old and the new photo.
+    func extendMark(by delta: Int) {
+        guard let from = currentPhoto else { return }
+        marked.insert(from.id.path)
+        move(by: delta)
+        if let to = currentPhoto { marked.insert(to.id.path) }
+    }
 
     private func prefetchNeighbours() {
         let range = max(selection - 2, 0)...min(selection + 3, photos.count - 1)
