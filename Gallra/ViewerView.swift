@@ -69,7 +69,7 @@ struct ViewerView: View {
     @ViewBuilder private var cameraPanel: some View {
         let info = tab.cameraInfo
         let rows: [(String, String)] = [
-            ("Lens", info.lens.map(Self.cleanLens)),
+            ("Lens", info.lens),
             ("Focal length", info.focalLength.map { "\(Int($0.rounded())) mm" }),
             ("Aperture", info.aperture.map { "f/" + Self.number($0) }),
             ("Shutter", info.shutter.flatMap { $0 > 0 ? ($0 >= 1 ? Self.number($0) + " s" : "1/\(Int((1 / $0).rounded())) s") : nil }),
@@ -90,11 +90,6 @@ struct ViewerView: View {
             .padding(.horizontal, 10).padding(.vertical, 8)
             .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 8))
         }
-    }
-
-    /// Hasselblad lenses report "XCD 35-100E@35"; drop the "@35" since focal length has its own row.
-    private static func cleanLens(_ name: String) -> String {
-        name.replacingOccurrences(of: #"\s*@\s*[\d.,]+$"#, with: "", options: .regularExpression)
     }
 
     private static func number(_ value: Double) -> String {
@@ -119,6 +114,9 @@ struct ViewerView: View {
 /// 64 pt strip of thumbnails along the bottom; keeps the current photo centered.
 struct FilmstripView: View {
     let tab: FolderTab
+    @State private var position = ScrollPosition()
+    @State private var offsetX: CGFloat = 0
+    @State private var maxOffsetX: CGFloat = 0
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -133,6 +131,13 @@ struct FilmstripView: View {
                     }
                 }.padding(.horizontal, 8)
             }
+            .scrollPosition($position)
+            .onScrollGeometryChange(for: [CGFloat].self) { geo in
+                [geo.contentOffset.x, max(geo.contentSize.width - geo.containerSize.width, 0)]
+            } action: { _, new in offsetX = new[0]; maxOffsetX = new[1] }
+            .background(WheelCatcher { delta in
+                position.scrollTo(x: min(max(offsetX - delta, 0), maxOffsetX))
+            })
             .onChange(of: tab.selection, initial: true) { _, new in
                 if tab.photos.indices.contains(new) { proxy.scrollTo(tab.photos[new].id, anchor: .center) }
             }
@@ -140,5 +145,34 @@ struct FilmstripView: View {
         .frame(height: 56)
         .background(Theme.window)
         .overlay(alignment: .top) { Theme.line.frame(height: 1) }
+    }
+}
+
+/// Turns a plain (vertical) mouse-wheel turn over this view into a callback, so a horizontal
+/// strip can be scrolled with an ordinary mouse. Sideways trackpad swipes are left to the strip.
+private struct WheelCatcher: NSViewRepresentable {
+    let onWheel: (CGFloat) -> Void
+
+    func makeNSView(context: Context) -> NSView { Catcher() }
+    func updateNSView(_ view: NSView, context: Context) { (view as? Catcher)?.onWheel = onWheel }
+
+    final class Catcher: NSView {
+        var onWheel: ((CGFloat) -> Void)?
+        private var monitor: Any?
+
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }   // never steals clicks
+
+        override func viewDidMoveToWindow() {
+            if let monitor { NSEvent.removeMonitor(monitor); self.monitor = nil }
+            guard window != nil else { return }
+            monitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
+                guard let self, event.window === self.window,
+                      self.bounds.contains(self.convert(event.locationInWindow, from: nil)),
+                      abs(event.scrollingDeltaY) > abs(event.scrollingDeltaX) else { return event }
+                let delta = event.hasPreciseScrollingDeltas ? event.scrollingDeltaY : event.scrollingDeltaY * 12
+                self.onWheel?(delta)
+                return nil
+            }
+        }
     }
 }

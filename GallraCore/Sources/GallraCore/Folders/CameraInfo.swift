@@ -28,6 +28,11 @@ public struct CameraInfo: Sendable, Equatable {
         return parts.joined(separator: " · ")
     }
 
+    /// Hasselblad lenses report "XCD 35-100E@35"; drop the "@35" since focal length is shown separately.
+    static func cleanLens(_ name: String) -> String {
+        name.replacingOccurrences(of: #"\s*@\s*[\d.,]+$"#, with: "", options: .regularExpression)
+    }
+
     private static func number(_ value: Double) -> String {
         value == value.rounded() ? String(Int(value)) : String(format: "%.1f", value)
     }
@@ -41,7 +46,7 @@ extension PhotoMetadataReader {
               let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
               let exif = props[kCGImagePropertyExifDictionary] as? [CFString: Any] else { return CameraInfo() }
         return CameraInfo(
-            lens: exif[kCGImagePropertyExifLensModel] as? String,
+            lens: (exif[kCGImagePropertyExifLensModel] as? String).map(CameraInfo.cleanLens),
             aperture: (exif[kCGImagePropertyExifFNumber] as? NSNumber)?.doubleValue,
             shutter: (exif[kCGImagePropertyExifExposureTime] as? NSNumber)?.doubleValue,
             iso: ((exif[kCGImagePropertyExifISOSpeedRatings] as? [NSNumber])?.first ?? exif[kCGImagePropertyExifISOSpeed] as? NSNumber)?.intValue,
