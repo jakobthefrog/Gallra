@@ -25,5 +25,8 @@ struct GallraApp: App {
                     .keyboardShortcut("s", modifiers: [.command, .control])
             }
         }
+        Settings {
+            SettingsView().environment(model)
+        }
     }
 }
