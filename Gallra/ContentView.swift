@@ -8,6 +8,7 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            Theme.line.frame(height: 1)   // divider under the tab row
             GeometryReader { geo in
                 HStack(spacing: 0) {
                     if model.sidebarVisible {
@@ -26,7 +27,7 @@ struct ContentView: View {
         .tint(Theme.accent)
         .frame(minWidth: 700, minHeight: 450)
         .toolbar {
-            ToolbarItem(placement: .navigation) { TabBarView().frame(minWidth: 300, maxWidth: .infinity) }
+            TabsToolbarItem()
         }
         .toolbarBackground(Theme.canvas, for: .windowToolbar)
         .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
@@ -203,4 +204,17 @@ struct TabContentView: View {
         }
         return .handled
     }
+}
+
+/// The tab bar as a window-toolbar item, without the rounded pill newer macOS draws around items.
+private struct TabsToolbarItem: ToolbarContent {
+    var body: some ToolbarContent {
+        if #available(macOS 26, *) {
+            ToolbarItem(placement: .navigation) { tabs }.sharedBackgroundVisibility(.hidden)
+        } else {
+            ToolbarItem(placement: .navigation) { tabs }
+        }
+    }
+
+    private var tabs: some View { TabBarView().frame(minWidth: 300, maxWidth: .infinity) }
 }

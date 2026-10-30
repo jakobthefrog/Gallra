@@ -18,7 +18,6 @@ struct TabBarView: View {
         }
         .frame(height: 30)
         .background(Theme.canvas)
-        .overlay(alignment: .bottom) { Theme.line.frame(height: 1) }
     }
 }
 
