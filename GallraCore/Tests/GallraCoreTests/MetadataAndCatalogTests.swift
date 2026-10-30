@@ -55,3 +55,52 @@ import Foundation
         #expect(try await catalog.favorites() == ["/b"])
     }
 }
+
+@Suite struct ScanTreeTests {
+    /// Root with 2 photos, `a/b` with 2 photos, and a Rejected folder with 1 photo (all copies).
+    private func nestedFolder() throws -> URL {
+        let fm = FileManager.default
+        let root = try Scratch.folder(cr3: 1, threeFR: 1)
+        let deep = root.appendingPathComponent("a/b", isDirectory: true)
+        let rejected = root.appendingPathComponent(FolderBrowser.rejectedFolderName, isDirectory: true)
+        try fm.createDirectory(at: deep, withIntermediateDirectories: true)
+        try fm.createDirectory(at: rejected, withIntermediateDirectories: true)
+        let files = try fm.contentsOfDirectory(atPath: root.path).filter { RawFormat(fileExtension: ($0 as NSString).pathExtension) != nil }
+        for name in files {
+            try fm.copyItem(at: root.appendingPathComponent(name), to: deep.appendingPathComponent(name))
+        }
+        try fm.copyItem(at: root.appendingPathComponent(files[0]), to: rejected.appendingPathComponent(files[0]))
+        return root
+    }
+
+    @Test func treeScanFindsNestedPhotosAndSkipsRejected() async throws {
+        let root = try nestedFolder()
+        let catalog = try Catalog(url: FileManager.default.temporaryDirectory
+            .appendingPathComponent("gallra-cat-\(UUID().uuidString)/catalog.sqlite"))
+        let scanner = FolderScanner(catalog: catalog)
+
+        #expect(try await scanner.scan(root).count == 2)
+        let all = try await scanner.scanTree(root)
+        #expect(all.count == 4)
+        #expect(!all.contains { $0.id.path.contains(FolderBrowser.rejectedFolderName) })
+        #expect(Set(all.map(\.folderPath)).count == 2)
+    }
+}
+
+@Suite struct SubfolderDetectionTests {
+    @Test func onlyFoldersWithPhotosCount() throws {
+        let fm = FileManager.default
+        let root = try Scratch.folder(cr3: 1, threeFR: 1)
+        try fm.createDirectory(at: root.appendingPathComponent("Exports"), withIntermediateDirectories: true)
+        let rejected = root.appendingPathComponent(FolderBrowser.rejectedFolderName)
+        try fm.createDirectory(at: rejected, withIntermediateDirectories: true)
+        let name = try fm.contentsOfDirectory(atPath: root.path).first { $0.lowercased().hasSuffix("cr3") }!
+        try fm.copyItem(at: root.appendingPathComponent(name), to: rejected.appendingPathComponent(name))
+        #expect(!FolderScanner.hasPhotosInSubfolders(of: root))
+
+        let shoot = root.appendingPathComponent("Shoot")
+        try fm.createDirectory(at: shoot, withIntermediateDirectories: true)
+        try fm.copyItem(at: root.appendingPathComponent(name), to: shoot.appendingPathComponent(name))
+        #expect(FolderScanner.hasPhotosInSubfolders(of: root))
+    }
+}

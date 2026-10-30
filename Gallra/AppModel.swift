@@ -25,6 +25,20 @@ final class AppModel {
     var selectedTabID: UUID?
     var favorites: [String] = []
     var sidebarVisible = true
+    /// Show photos from all sub folders too (remembered between launches, on by default).
+    var includeSubfolders = UserDefaults.standard.object(forKey: "includeSubfolders") as? Bool ?? true {
+        didSet {
+            UserDefaults.standard.set(includeSubfolders, forKey: "includeSubfolders")
+            for tab in tabs { tab.subfolderSettingChanged() }
+        }
+    }
+    /// With sub folders included: true = one section per folder, false = one flat grid.
+    var layoutByFolder = UserDefaults.standard.bool(forKey: "layoutByFolder") {
+        didSet {
+            UserDefaults.standard.set(layoutByFolder, forKey: "layoutByFolder")
+            for tab in tabs { tab.subfolderSettingChanged() }
+        }
+    }
     var startupError: String?
 
     var selectedTab: FolderTab? { tabs.first { $0.id == selectedTabID } }

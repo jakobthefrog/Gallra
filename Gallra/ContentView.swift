@@ -113,10 +113,25 @@ struct TabContentView: View {
             .overlay { RoundedRectangle(cornerRadius: 6).stroke(Theme.line, lineWidth: 1) }
             Button("Group") { tab.grouping.toggle() }
                 .controlSize(.small)
-                .tint(tab.grouping ? Theme.accent : nil)
+                .tint(tab.groupingActive ? Theme.accent : nil)
                 .buttonStyle(.bordered)
-                .help("Group similar photos into scenes (G)")
-                .accessibilityAddTraits(tab.grouping ? .isSelected : [])
+                .disabled(!tab.groupingAllowed)
+                .help(tab.groupingAllowed ? "Group similar photos into scenes (G)" : "Switch to \"By folder\" to group scenes")
+                .accessibilityAddTraits(tab.groupingActive ? .isSelected : [])
+            if tab.hasSubfolders { Button("Include sub folders") { model.includeSubfolders.toggle() }
+                .controlSize(.small)
+                .tint(model.includeSubfolders ? Theme.accent : nil)
+                .buttonStyle(.bordered)
+                .help("Show photos from all folders inside this one")
+                .accessibilityAddTraits(model.includeSubfolders ? .isSelected : []) }
+            if tab.hasSubfolders && model.includeSubfolders {
+                Picker("Layout", selection: Bindable(model).layoutByFolder) {
+                    Text("Flat").tag(false).help("One grid with every photo")
+                    Text("By folder").tag(true).help("One section per sub folder")
+                }
+                .pickerStyle(.segmented).labelsHidden().frame(width: 120).controlSize(.small)
+                .accessibilityLabel("Sub folder layout")
+            }
             Button(tab.cameraFilter.isActive ? "Filters (\(tab.cameraFilter.activeCount))" : "Filters") { showCameraFilters.toggle() }
                 .controlSize(.small)
                 .popover(isPresented: $showCameraFilters, arrowEdge: .bottom) { CameraFilterPanel(tab: tab) }
@@ -171,6 +186,10 @@ struct TabContentView: View {
             Text(tab.folder == nil ? "" : "\(countText) · \(tab.folder?.path ?? "")")
                 .lineLimit(1).truncationMode(.middle)
             Spacer()
+            if let (done, total) = tab.scanProgress {
+                ProgressView(value: Double(done), total: Double(max(total, 1))).frame(width: 140).controlSize(.small)
+                Text("Scanning \(done)/\(total)")
+            }
             if let (done, total) = tab.groupProgress { Text("Grouping \(done)/\(total)…") }
             if let photo = tab.currentPhoto {
                 Text(([photo.fileName, tab.cameraInfo.summary].filter { !$0.isEmpty }).joined(separator: " · "))
@@ -211,7 +230,7 @@ struct TabContentView: View {
             case "f" where viewer: tab.showFilmstrip.toggle()
             case "0", "1", "2", "3": tab.setRating(Int(press.characters)!)
             case "c": tab.openCompare()
-            case "g": tab.grouping.toggle()
+            case "g" where tab.groupingAllowed: tab.grouping.toggle()
             default: return .ignored
             }
         }

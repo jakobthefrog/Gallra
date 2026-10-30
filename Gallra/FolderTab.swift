@@ -24,6 +24,9 @@ final class FolderTab: Identifiable {
     private(set) var choices = CameraChoices()
     /// (done, total) while camera info is being read for the whole folder.
     private(set) var cameraLoad: (Int, Int)?
+    /// (done, total) while a big folder tree is being scanned; nil when idle or the scan is quick.
+    private(set) var scanProgress: (Int, Int)?
+    private var isScanning = false
     private var wantsCameraInfo = false
     private var cameraScanTask: Task<Void, Never>?
     /// Short message about the last action (shown in the status bar for a few seconds).
@@ -79,11 +82,24 @@ final class FolderTab: Identifiable {
 
     func close() { watchTask?.cancel() }
 
+    /// Opens a sub folder shown as a section header in its own tab.
+    func openFolderInNewTab(_ path: String) { model.openInNewTab(URL(fileURLWithPath: path, isDirectory: true)) }
+
     func reload() {
         guard let folder, let scanner = model.scanner else { return }
+        let started = Date()
         Task {
             do {
-                let found = try await scanner.scan(folder)
+                // Sub folder buttons only matter when some folder below holds photos.
+                hasSubfolders = await Task.detached { FolderScanner.hasPhotosInSubfolders(of: folder) }.value
+                // Progress only shows for scans that take a while, so a quick re-scan after a rating doesn't flash a bar.
+                let report: @Sendable (Int, Int) -> Void = { [weak self] done, total in
+                    guard Date().timeIntervalSince(started) > 0.4 else { return }
+                    Task { @MainActor in if self?.isScanning == true { self?.scanProgress = done < total ? (done, total) : nil } }
+                }
+                isScanning = true
+                defer { isScanning = false; scanProgress = nil }
+                let found = try await (readsSubfolders ? scanner.scanTree(folder, progress: report) : scanner.scan(folder))
                 // Match by path: a rating write replaces the file, which can change its file number.
                 let keep = currentPhoto?.id.path
                 allPhotos = found
@@ -101,11 +117,31 @@ final class FolderTab: Identifiable {
 
     /// A scene header and the part of `photos` it covers (empty range when collapsed).
     struct SceneSection: Identifiable {
-        let id: String            // path of the scene's first photo
+        let id: String            // unique; the scene's first photo path, or "folder:" + path
+        /// Path of the scene's first photo (what drops and the scene list use); nil for a folder header.
+        let sceneID: String?
         let title: String
+        var isFolder: Bool { sceneID == nil }
+        /// Folder this header stands for (folder headers only).
+        var folderPath: String? { isFolder ? String(id.dropFirst("folder:".count)) : nil }
         let best: Int             // highest star rating in the scene
         let collapsed: Bool
         let range: Range<Int>
+    }
+
+    /// Photos come from sub folders too, laid out in one flat grid: scenes make no sense there.
+    /// True when some folder below this one holds photos (empty and Rejected folders don't count); the sub folder buttons only show then.
+    private(set) var hasSubfolders = false
+    private var readsSubfolders: Bool { hasSubfolders && model.includeSubfolders }
+    var groupingAllowed: Bool { !readsSubfolders || model.layoutByFolder }
+    var groupingActive: Bool { grouping && groupingAllowed }
+    private var showFolderSections: Bool { readsSubfolders && model.layoutByFolder }
+
+    /// Called when "include sub folders" or the layout changes in the toolbar.
+    func subfolderSettingChanged() {
+        if folder != nil { reload() }
+        if groupingActive { refreshScenes() }
+        applyFilter()
     }
 
     var grouping = false {
@@ -179,7 +215,7 @@ final class FolderTab: Identifiable {
     /// Drop handler: moves the dragged photos into the scene `sectionID`, or into a new group (nil).
     @discardableResult
     func drop(_ items: [String], into sectionID: String?) -> Bool {
-        guard grouping, let folderPath else { return false }
+        guard groupingActive, let folderPath else { return false }
         let known = Set(allPhotos.map(\.id.path))
         let moving = items.flatMap { $0.split(separator: "\n").map(String.init) }.filter(known.contains)
         guard !moving.isEmpty else { return false }
@@ -210,38 +246,87 @@ final class FolderTab: Identifiable {
             ordered = ordered.filter { cameraFilter.matches(CameraInfoCache.values[$0.id.path]) }
         }
         sections = []
-        if grouping && !scenes.isEmpty {
-            var place: [String: (scene: Int, pos: Int)] = [:]
+        let scened = groupingActive && !scenes.isEmpty
+        var place: [String: (scene: Int, pos: Int)] = [:]
+        if scened {
             for (n, scene) in scenes.enumerated() {
                 for (pos, id) in scene.photos.enumerated() { place[id.path] = (n, pos) }
             }
-            ordered.sort {
-                let a = place[$0.id.path] ?? (Int.max, 0), b = place[$1.id.path] ?? (Int.max, 0)
-                return a.0 != b.0 ? a.0 < b.0 : a.1 < b.1
-            }
+        }
+        if showFolderSections {
+            // One header per folder (allPhotos lists each folder's photos together), scenes inside it.
             var visible: [Photo] = []
             var i = 0
             while i < ordered.count {
-                guard let n = place[ordered[i].id.path]?.scene else { visible.append(ordered[i]); i += 1; continue }
+                let folderPath = ordered[i].folderPath
                 var j = i
-                while j < ordered.count, place[ordered[j].id.path]?.scene == n { j += 1 }
+                while j < ordered.count, ordered[j].folderPath == folderPath { j += 1 }
                 let members = Array(ordered[i..<j])
-                let id = scenes[n].photos[0].path
+                let id = "folder:" + folderPath
                 let isCollapsed = collapsed.contains(id)
                 let start = visible.count
-                if !isCollapsed { visible += members }
-                var title = "Scene · \(members.count) photo\(members.count == 1 ? "" : "s")"
-                if let date = members[0].captureDate { title += " · " + date.formatted(date: .omitted, time: .shortened) }
-                sections.append(SceneSection(id: id, title: title, best: members.compactMap(\.rating).max() ?? 0,
-                                             collapsed: isCollapsed, range: start..<visible.count))
+                var inner: [SceneSection] = []
+                if !isCollapsed {
+                    if scened { visible += arrangeScenes(members, place: place, visible: visible.count, into: &inner, salt: folderPath) }
+                    else { visible += members }
+                }
+                sections.append(SceneSection(id: id, sceneID: nil, title: folderTitle(folderPath, count: members.count),
+                                             best: 0, collapsed: isCollapsed, range: start..<start))
+                if scened { sections += inner } else if !isCollapsed {
+                    // Cells of a folder with no scenes sit in its header's section.
+                    sections[sections.count - 1] = SceneSection(id: id, sceneID: nil, title: folderTitle(folderPath, count: members.count),
+                                                                best: 0, collapsed: false, range: start..<visible.count)
+                }
                 i = j
             }
             ordered = visible
+        } else if scened {
+            ordered = arrangeScenes(ordered, place: place, visible: 0, into: &sections, salt: nil)
         }
         photos = ordered
         if let keep, let index = photos.firstIndex(where: { $0.id.path == keep }) { selection = index }
         else { selection = min(selection, max(photos.count - 1, 0)) }
         loadCameraInfo()
+    }
+
+    /// "March / Wedding · 140": the folder path below the folder being browsed, and a photo count.
+    private func folderTitle(_ path: String, count: Int) -> String {
+        let root = folderPath ?? ""
+        var name = path.hasPrefix(root) ? String(path.dropFirst(root.count)) : path
+        name = name.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        if name.isEmpty { name = folder?.lastPathComponent ?? path }
+        return name.replacingOccurrences(of: "/", with: " / ") + " · \(count)"
+    }
+
+    /// Sorts `members` into their scenes and adds a header per scene to `into`.
+    /// Returns the photos to show (collapsed scenes contribute none). `visible` is how many
+    /// photos come before these in the grid.
+    private func arrangeScenes(_ members: [Photo], place: [String: (scene: Int, pos: Int)], visible base: Int,
+                               into sections: inout [SceneSection], salt: String?) -> [Photo] {
+        let ordered = members.sorted {
+            let a = place[$0.id.path] ?? (Int.max, 0), b = place[$1.id.path] ?? (Int.max, 0)
+            return a.0 != b.0 ? a.0 < b.0 : a.1 < b.1
+        }
+        var shown: [Photo] = []
+        var i = 0
+        while i < ordered.count {
+            guard let n = place[ordered[i].id.path]?.scene else { shown.append(ordered[i]); i += 1; continue }
+            var j = i
+            while j < ordered.count, place[ordered[j].id.path]?.scene == n { j += 1 }
+            let scenePhotos = Array(ordered[i..<j])
+            let sceneID = scenes[n].photos[0].path
+            let id = salt.map { $0 + "|" + sceneID } ?? sceneID
+            let isCollapsed = collapsed.contains(id)
+            let start = base + shown.count
+            if !isCollapsed { shown += scenePhotos }
+            var title = "Scene · \(scenePhotos.count) photo\(scenePhotos.count == 1 ? "" : "s")"
+            if let date = scenePhotos[0].captureDate { title += " · " + date.formatted(date: .omitted, time: .shortened) }
+            sections.append(SceneSection(id: id, sceneID: sceneID, title: title,
+                                         best: scenePhotos.compactMap(\.rating).max() ?? 0,
+                                         collapsed: isCollapsed, range: start..<(base + shown.count)))
+            i = j
+        }
+        return shown
     }
 
     /// Reads the selected photo's lens, aperture, shutter and ISO in the background.

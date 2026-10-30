@@ -13,7 +13,7 @@ struct GridView: View {
             let cols = max(1, Int((geo.size.width - gap) / (tab.cellSize + gap)))
             ScrollViewReader { proxy in
                 ScrollView {
-                    if tab.grouping { NewGroupZone(tab: tab) }
+                    if tab.groupingActive { NewGroupZone(tab: tab) }
                     LazyVGrid(columns: Array(repeating: GridItem(.fixed(tab.cellSize), spacing: gap), count: cols),
                               spacing: gap) {
                         if tab.sections.isEmpty {
@@ -23,8 +23,8 @@ struct GridView: View {
                                 Section {
                                     ForEach(section.range, id: \.self) { cell($0, in: section) }
                                 } header: {
-                                    SceneHeader(section: section, toggle: { tab.toggleCollapsed(section.id) },
-                                                drop: { tab.drop($0, into: section.id) })
+                                    SceneHeader(section: section, openFolder: section.folderPath.map { path in { tab.openFolderInNewTab(path) } }, toggle: { tab.toggleCollapsed(section.id) },
+                                                drop: { items in section.sceneID.map { tab.drop(items, into: $0) } ?? false })
                                 }
                             }
                         }
@@ -78,9 +78,10 @@ extension GridView {
     }
 }
 
-/// Thin header above a scene: "Scene · 5 photos · 14:32", best rating, collapse arrow.
+/// Thin header above a scene or a folder: "Scene · 5 photos · 14:32", best rating, collapse arrow.
 private struct SceneHeader: View {
     let section: FolderTab.SceneSection
+    let openFolder: (() -> Void)?
     let toggle: () -> Void
     let drop: ([String]) -> Bool
     @State private var targeted = false
@@ -88,7 +89,8 @@ private struct SceneHeader: View {
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: section.collapsed ? "chevron.right" : "chevron.down").font(.system(size: 9))
-            Text(section.title)
+            if section.isFolder { Image(systemName: "folder").font(.system(size: 10)) }
+            Text(section.title).fontWeight(section.isFolder ? .medium : .regular)
             if section.best > 0 { Text(String(repeating: "★", count: section.best)).foregroundStyle(Theme.star) }
             Spacer()
         }
@@ -97,6 +99,7 @@ private struct SceneHeader: View {
         .background(targeted ? Theme.accent.opacity(0.35) : Theme.canvas)
         .contentShape(Rectangle())
         .onTapGesture(perform: toggle)
+        .contextMenu { if let openFolder { Button("Open folder in new tab", action: openFolder) } }
         .dropDestination(for: String.self) { items, _ in drop(items) } isTargeted: { targeted = $0 }
     }
 }
