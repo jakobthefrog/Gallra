@@ -57,7 +57,7 @@ Monospaced digits for counts, EXIF values and zoom percent.
 | 248 photos · 12 selected · /Volumes/Shoot/2026-10-12       |  status bar
 +-----------------------------------------------------------+
 ```
-Sidebar is collapsible (Cmd+Ctrl+S). On large monitors the content area grows; sidebar stays fixed width (220 pt), and the grid adds columns instead of enlarging thumbnails.
+Sidebar is collapsible (Cmd+Ctrl+S). On large monitors the content area grows; sidebar is 10% of the window width (minimum 140 pt), and the grid adds columns instead of enlarging thumbnails.
 
 ## Screens
 

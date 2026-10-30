@@ -3,6 +3,7 @@ import GallraCore
 
 /// Favorites, Locations and an expandable folder tree.
 struct SidebarView: View {
+    let width: Double
     @Environment(AppModel.self) private var model
 
     private var locations: [URL] {
@@ -31,7 +32,7 @@ struct SidebarView: View {
             }
             .padding(8)
         }
-        .frame(width: 220)
+        .frame(width: width)
         .background(Theme.sidebar)
         .safeAreaInset(edge: .bottom) {
             Button("Open Folder…") { model.chooseFolder(inNewTab: false) }

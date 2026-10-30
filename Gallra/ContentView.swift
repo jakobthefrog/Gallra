@@ -8,13 +8,16 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             TabBarView()
-            HStack(spacing: 0) {
-                if model.sidebarVisible {
-                    SidebarView()
-                    Theme.line.frame(width: 1)
-                }
-                if let tab = model.selectedTab {
-                    TabContentView(tab: tab).id(tab.id)
+            GeometryReader { geo in
+                HStack(spacing: 0) {
+                    if model.sidebarVisible {
+                        // 10% of the window, but never too narrow to read folder names.
+                        SidebarView(width: max(140, geo.size.width * 0.10))
+                        Theme.line.frame(width: 1)
+                    }
+                    if let tab = model.selectedTab {
+                        TabContentView(tab: tab).id(tab.id)
+                    }
                 }
             }
         }
