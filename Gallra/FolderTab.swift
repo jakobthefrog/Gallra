@@ -13,9 +13,19 @@ final class FolderTab: Identifiable {
 
     var folder: URL?
     /// Every photo in the folder; `photos` is the part that passes `filter`.
-    var allPhotos: [Photo] = [] { didSet { applyFilter(); if grouping { refreshScenes() } } }
+    var allPhotos: [Photo] = [] {
+        didSet { applyFilter(); if grouping { refreshScenes() }; if wantsCameraInfo { loadAllCameraInfo() } }
+    }
     private(set) var photos: [Photo] = []
     var filter: RatingFilter = .all { didSet { applyFilter() } }
+    /// Filter by lens, aperture, shutter, ISO and focal length (needs `loadAllCameraInfo`).
+    var cameraFilter = CameraFilter() { didSet { applyFilter() } }
+    /// The values present in this folder, offered as choices in the filter panel.
+    private(set) var choices = CameraChoices()
+    /// (done, total) while camera info is being read for the whole folder.
+    private(set) var cameraLoad: (Int, Int)?
+    private var wantsCameraInfo = false
+    private var cameraScanTask: Task<Void, Never>?
     /// Short message about the last action (shown in the status bar for a few seconds).
     var notice: String?
     var noticeUndoable = false
@@ -48,6 +58,7 @@ final class FolderTab: Identifiable {
     func open(_ folder: URL) {
         watchTask?.cancel()
         self.folder = folder
+        cameraFilter = CameraFilter()
         allPhotos = []
         selection = 0
         mode = .grid
@@ -192,6 +203,9 @@ final class FolderTab: Identifiable {
     private func applyFilter() {
         let keep = currentPhoto?.id.path
         var ordered = filter.apply(to: allPhotos)
+        if cameraFilter.isActive {
+            ordered = ordered.filter { cameraFilter.matches(CameraInfoCache.values[$0.id.path]) }
+        }
         sections = []
         if grouping && !scenes.isEmpty {
             var place: [String: (scene: Int, pos: Int)] = [:]
@@ -239,6 +253,34 @@ final class FolderTab: Identifiable {
         }
     }
 
+    /// Reads camera info (EXIF, read-only) for every photo in the folder, a batch at a time,
+    /// so the filter panel can offer choices and the grid can be filtered by them.
+    func loadAllCameraInfo() {
+        wantsCameraInfo = true
+        refreshChoices()
+        let missing = allPhotos.map(\.url).filter { CameraInfoCache.values[$0.path] == nil }
+        cameraScanTask?.cancel()
+        guard !missing.isEmpty else { cameraLoad = nil; return }
+        cameraScanTask = Task { [weak self] in
+            var done = 0
+            for start in stride(from: 0, to: missing.count, by: 24) {
+                let batch = Array(missing[start..<min(start + 24, missing.count)])
+                let read = await Task.detached { batch.map { ($0.path, PhotoMetadataReader().cameraInfo($0)) } }.value
+                guard !Task.isCancelled, let self else { return }
+                for (path, info) in read { CameraInfoCache.values[path] = info }
+                done += batch.count
+                self.cameraLoad = (done, missing.count)
+                self.refreshChoices()
+                if self.cameraFilter.isActive { self.applyFilter() }
+            }
+            self?.cameraLoad = nil
+        }
+    }
+
+    private func refreshChoices() {
+        choices = CameraChoices(allPhotos.compactMap { CameraInfoCache.values[$0.id.path] })
+    }
+
     /// Shows a toast. `undoable` adds an Undo button and keeps it up for 8 s instead of 4.
     func showNotice(_ text: String, undoable: Bool = false, isError: Bool = false) {
         notice = text
@@ -253,10 +295,13 @@ final class FolderTab: Identifiable {
 
     // MARK: Cull actions
 
-    /// Sets the current photo's star rating (0 clears). Shown at once; written to the file in
+    /// Sets the current photo's star rating (0 clears; pressing the same rating again clears it). Shown at once; written to the file in
     /// the background, one write at a time. Put back with a message if the write fails.
-    func setRating(_ stars: Int) {
-        guard let photo = targetPhoto, photo.rating != stars else { return }
+    func setRating(_ requested: Int) {
+        guard let photo = targetPhoto else { return }
+        // Pressing the rating the photo already has clears it.
+        let stars = requested > 0 && photo.rating == requested ? 0 : requested
+        guard photo.rating != stars else { return }
         update(photo.id.path) { $0.rating = stars }
         let writer = model.ratingWriter
         let previous = photo.rating

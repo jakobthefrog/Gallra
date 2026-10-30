@@ -44,6 +44,7 @@ struct TabContentView: View {
     @Environment(AppModel.self) private var model
     @FocusState private var focused: Bool
     @State private var confirmUnrated = false
+    @State private var showCameraFilters = false
     @AppStorage("showCardDetails") private var showCardDetails = false
 
     var body: some View {
@@ -110,6 +111,15 @@ struct TabContentView: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .overlay { RoundedRectangle(cornerRadius: 6).stroke(Theme.line, lineWidth: 1) }
+            Button("Group") { tab.grouping.toggle() }
+                .controlSize(.small)
+                .tint(tab.grouping ? Theme.accent : nil)
+                .buttonStyle(.bordered)
+                .help("Group similar photos into scenes (G)")
+                .accessibilityAddTraits(tab.grouping ? .isSelected : [])
+            Button(tab.cameraFilter.isActive ? "Filters (\(tab.cameraFilter.activeCount))" : "Filters") { showCameraFilters.toggle() }
+                .controlSize(.small)
+                .popover(isPresented: $showCameraFilters, arrowEdge: .bottom) { CameraFilterPanel(tab: tab) }
             Button("Move unrated (\(tab.unratedInView.count))…") { confirmUnrated = true }
                 .disabled(tab.unratedInView.isEmpty)
                 .controlSize(.small)
@@ -166,7 +176,7 @@ struct TabContentView: View {
     }
 
     private var countText: String {
-        tab.filter == .all ? "\(tab.photos.count) photos" : "\(tab.photos.count) of \(tab.allPhotos.count) photos"
+        tab.filter == .all && !tab.cameraFilter.isActive ? "\(tab.photos.count) photos" : "\(tab.photos.count) of \(tab.allPhotos.count) photos"
     }
 
     private func handleKey(_ press: KeyPress) -> KeyPress.Result {

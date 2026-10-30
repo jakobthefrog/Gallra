@@ -23,6 +23,8 @@ Rule: one stage per chat session. Finish, tick boxes, commit, then start a fresh
 ## Stage 4: Cull actions
 - [x] Star rating (keys 1-3, 0 to clear), rating write, filters, move-to-Rejected with undo, "move all unrated" action (files with no rating field count as unrated)
 
+- [x] Camera-info filters (aperture, shutter, ISO, focal length; exact value or from/to) in a Filters popover; EXIF read in the background for the whole folder
+
 ## Stage 5: Compare
 - [x] Side-by-side with linked zoom and pan
 
