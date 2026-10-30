@@ -70,11 +70,11 @@ private struct FolderRow: View {
     let expandable: Bool
     var title: String?
     @Environment(AppModel.self) private var model
-    @State private var expanded = false
     @State private var children: [FolderNode] = []
     @State private var count: Int?
     @State private var hovering = false
 
+    private var expanded: Bool { model.expandedFolders.contains(url.path) }
     private var isCurrent: Bool { model.selectedTab?.folderPath == FolderScanner.canonicalPath(url) }
 
     var body: some View {
@@ -115,7 +115,10 @@ private struct FolderRow: View {
                 } else { model.open(url) }
             }
             .contextMenu { Button("Open in New Tab") { model.openInNewTab(url) } }
-            .task { await loadCount() }
+            .task {
+                if expanded { loadChildren() }     // was open when the app was last closed
+                await loadCount()
+            }
 
             if expanded {
                 ForEach(children) { child in
@@ -126,8 +129,12 @@ private struct FolderRow: View {
     }
 
     private func toggle() {
-        expanded.toggle()
-        guard expanded else { return }
+        if expanded { model.expandedFolders.remove(url.path); return }
+        model.expandedFolders.insert(url.path)
+        loadChildren()
+    }
+
+    private func loadChildren() {
         // Show the last list at once (if we've seen this folder), then refresh it.
         if let known = SubfolderCache.values[url.path] { children = known }
         let browser = model.browser

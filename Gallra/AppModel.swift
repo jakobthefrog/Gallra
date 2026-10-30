@@ -22,8 +22,12 @@ final class AppModel {
     /// Actions that can still be undone, newest last.
     var undoStack: [UndoStep] = []
 
-    var tabs: [FolderTab] = []
-    var selectedTabID: UUID?
+    var tabs: [FolderTab] = [] { didSet { saveSession() } }
+    var selectedTabID: UUID? { didSet { saveSession() } }
+    /// Paths of the sidebar folders that are expanded (remembered between launches).
+    var expandedFolders: Set<String> = Set(UserDefaults.standard.stringArray(forKey: "expandedFolders") ?? []) {
+        didSet { UserDefaults.standard.set(Array(expandedFolders), forKey: "expandedFolders") }
+    }
     var favorites: [String] = []
     var sidebarVisible = true
     /// Show photos from all sub folders too (remembered between launches, on by default).
@@ -59,8 +63,29 @@ final class AppModel {
             similarity = nil
             startupError = "Could not open the photo cache: \(error)"
         }
+        // Read what the last session saved before opening tabs (opening them saves again).
+        let savedTabs = UserDefaults.standard.stringArray(forKey: "openTabs") ?? []
+        let savedSelected = UserDefaults.standard.string(forKey: "selectedTab")
         newTab()
+        for path in savedTabs {
+            var isFolder: ObjCBool = false
+            // Skip folders that are gone (for example an unplugged drive).
+            guard FileManager.default.fileExists(atPath: path, isDirectory: &isFolder), isFolder.boolValue else { continue }
+            let url = URL(fileURLWithPath: path, isDirectory: true)
+            if tabs.count == 1, tabs[0].folder == nil { tabs[0].open(url) } else { openInNewTab(url) }
+        }
+        if let savedSelected, let tab = tabs.first(where: { $0.folderPath == FolderScanner.canonicalPath(URL(fileURLWithPath: savedSelected)) }) {
+            selectedTabID = tab.id
+        }
         Task { await reloadFavorites() }
+    }
+
+    /// Remembers the open folders and the selected one, so the next launch opens them again.
+    /// Empty tabs aren't saved.
+    func saveSession() {
+        let paths = tabs.compactMap { $0.folder?.path }
+        UserDefaults.standard.set(paths, forKey: "openTabs")
+        if let selected = selectedTab?.folder?.path { UserDefaults.standard.set(selected, forKey: "selectedTab") }
     }
 
     // MARK: Cache

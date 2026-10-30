@@ -142,6 +142,15 @@ struct FilmstripView: View {
                         ThumbnailView(photo: photo, size: 48, isSelected: false)
                             .opacity(index == tab.selection ? 1 : 0.65)
                             .overlay { if index == tab.selection { RoundedRectangle(cornerRadius: 4).stroke(Theme.accent, lineWidth: 2) } }
+                            .overlay(alignment: .bottomLeading) {
+                                if let stars = photo.rating, stars > 0 {
+                                    Text(String(repeating: "★", count: stars))
+                                        .font(.system(size: 8)).foregroundStyle(Theme.star)
+                                        .padding(.horizontal, 3).padding(.vertical, 1)
+                                        .background(.black.opacity(0.65), in: RoundedRectangle(cornerRadius: 2))
+                                        .padding(2)
+                                }
+                            }
                             .id(photo.id)
                             .onTapGesture { tab.select(index) }
                     }

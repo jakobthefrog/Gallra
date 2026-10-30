@@ -65,6 +65,7 @@ final class FolderTab: Identifiable {
     func open(_ folder: URL) {
         watchTask?.cancel()
         self.folder = folder
+        model.saveSession()
         cameraFilter = CameraFilter()
         allPhotos = []
         selection = 0
