@@ -32,7 +32,6 @@ struct SidebarView: View {
             }
             .padding(8)
         }
-        .frame(width: width)
         .background(Theme.sidebar)
         .safeAreaInset(edge: .bottom) {
             Button("Open Folder…") { model.chooseFolder(inNewTab: false) }
@@ -40,6 +39,9 @@ struct SidebarView: View {
                 .frame(maxWidth: .infinity, alignment: .leading).padding(12)
                 .background(Theme.sidebar)
         }
+        // Width goes on the whole column: the button above stretches, which would otherwise
+        // make the column take half the window.
+        .frame(width: width)
     }
 }
 
