@@ -11,7 +11,9 @@ enum Theme {
     static let textPrimary = Color(hex: 0xECEBE6)
     static let textSecondary = Color(hex: 0xA3A29B)
     static let textDisabled = Color(hex: 0x6B6A65)
-    static let accent = Color(hex: 0x4C8DFF)
+    static let accent = Color(hex: 0xE0701F)
+    /// Text on an accent-colored fill (white is too low in contrast on this orange).
+    static let onAccent = Color(hex: 0x1F1E1D)
     static let star = Color(hex: 0xF2C14E)
     static let reject = Color(hex: 0xE5645A)
 }

@@ -24,6 +24,7 @@ struct ContentView: View {
         }
         .background(Theme.window)
         .preferredColorScheme(.dark)
+        .tint(Theme.accent)
         .frame(minWidth: 700, minHeight: 450)
         .sheet(isPresented: .init(get: { !hasSeenWelcome }, set: { hasSeenWelcome = !$0 })) {
             WelcomeView { hasSeenWelcome = true }
@@ -89,10 +90,19 @@ struct TabContentView: View {
     private var toolbar: some View {
         @Bindable var tab = tab
         return HStack(spacing: 8) {
-            Picker("Filter", selection: $tab.filter) {
-                ForEach(RatingFilter.allCases, id: \.self) { Text($0.label).tag($0) }
+            HStack(spacing: 0) {
+                ForEach(RatingFilter.allCases, id: \.self) { option in
+                    let on = tab.filter == option
+                    Text(option.label).font(.system(size: 11)).padding(.horizontal, 8).frame(height: 20)
+                        .foregroundStyle(on ? Theme.onAccent : Theme.textSecondary)
+                        .background(on ? Theme.accent : .clear)
+                        .contentShape(Rectangle())
+                        .onTapGesture { tab.filter = option }
+                        .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
+                }
             }
-            .pickerStyle(.segmented).labelsHidden().frame(maxWidth: 380)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .overlay { RoundedRectangle(cornerRadius: 6).stroke(Theme.line, lineWidth: 1) }
             Button("Move unrated (\(tab.unratedInView.count))…") { confirmUnrated = true }
                 .disabled(tab.unratedInView.isEmpty)
                 .controlSize(.small)
@@ -102,7 +112,7 @@ struct TabContentView: View {
                 .accessibilityLabel("Thumbnail size")
             Image(systemName: "photo").font(.system(size: 16)).foregroundStyle(Theme.textSecondary)
         }
-        .padding(.horizontal, 12).frame(height: 36)
+        .padding(.horizontal, 8).frame(height: 30)
         .background(Theme.raised)
     }
 
@@ -131,9 +141,13 @@ struct TabContentView: View {
                 .lineLimit(1).truncationMode(.middle)
             Spacer()
             if let (done, total) = tab.groupProgress { Text("Grouping \(done)/\(total)…") }
+            if let photo = tab.currentPhoto {
+                Text(([photo.fileName, tab.cameraInfo.summary].filter { !$0.isEmpty }).joined(separator: " · "))
+                    .lineLimit(1).truncationMode(.tail)
+            }
         }
         .font(.system(size: 11).monospacedDigit()).foregroundStyle(Theme.textSecondary)
-        .padding(.horizontal, 12).frame(height: 24)
+        .padding(.horizontal, 12).frame(height: 22)
         .background(Theme.window)
         .overlay(alignment: .top) { Theme.line.frame(height: 1) }
     }

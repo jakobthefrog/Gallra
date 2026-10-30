@@ -5,8 +5,17 @@ Status: updated with owner decisions (see end). Awaiting final approval.
 ## Direction
 Dark, quiet, photo-first. The UI recedes so the photo is the brightest thing on screen. Inspired by Apple Aperture and Photoculler. One accent color, system font, no decoration. No pure black or pure white anywhere.
 
+## Pro-tool density (round 2, owner-approved)
+Denser than the first version, closer to Lightroom or Capture One, still quiet and dark:
+- Tab bar: flat, 28 pt, active tab marked by a 2 px accent line on top.
+- Sidebar: 10% of window width (min 140 pt), small gray section labels, short rows.
+- Toolbar: 30 pt slim bar with a segmented rating filter (Any, 1+, 2+, 3, None), the Group toggle, and a thin size slider.
+- Grid: 3 pt gaps; scene header is a thin 18 pt line ("Scene · 5 photos · 14:32 · best rating"). Rating shows as a small star badge on the photo. Selected photo has a 2 px accent ring.
+- Status bar: 22 pt; left = counts, right = camera info of the selected photo (file, shutter, aperture, ISO).
+- Viewer: filename and stars top-left, camera info top-right, position bottom-center; filmstrip 56 pt with the current photo ringed in accent and the others dimmed to 65%.
+
 ## Color tokens
-Layered warm grays, matched by eye to the Claude desktop app's dark mode (values are approximations; adjust once seen on screen). The deeper the layer, the closer to the photo. Accent stays blue (owner-approved).
+Layered warm grays, matched by eye to the Claude desktop app's dark mode (values are approximations; adjust once seen on screen). The deeper the layer, the closer to the photo. Accent is dark orange (owner-approved, round 2).
 
 | Token | Hex | Use |
 |---|---|---|
@@ -19,7 +28,8 @@ Layered warm grays, matched by eye to the Claude desktop app's dark mode (values
 | `text.primary` | `#ECEBE6` | Main text |
 | `text.secondary` | `#A3A29B` | Labels, metadata |
 | `text.disabled` | `#6B6A65` | Disabled |
-| `accent` | `#4C8DFF` | Selection ring, focus, active tab marker |
+| `accent` | `#E0701F` | Selection ring, focus, active tab marker, active filter |
+| `on.accent` | `#1F1E1D` | Text on an accent fill (white on this orange is too low in contrast) |
 | `star` | `#F2C14E` | Filled stars |
 | `reject` | `#E5645A` | Move-to-Rejected, destructive-looking actions |
 
@@ -40,7 +50,7 @@ Monospaced digits for counts, EXIF values and zoom percent.
 ## Spacing and shape
 - Spacing scale: 4, 8, 12, 16, 24, 32.
 - Corner radius: 6 (controls), 4 (thumbnails), 10 (popovers and dialogs).
-- Thumbnail gap: 4 by default. Selection = 2 px accent ring, no fill.
+- Thumbnail gap: 3 by default. Selection = 2 px accent ring, no fill.
 - Motion: 120 ms ease-out for hover and selection; none for photo changes (instant).
 
 ## Window layout
@@ -128,7 +138,8 @@ Sidebar is collapsible (Cmd+Ctrl+S). On large monitors the content area grows; s
 - Respects macOS "Reduce motion" and text size where practical.
 
 ## Decisions (owner)
-- Accent is blue.
+- Accent is dark orange (changed from blue in round 2).
+- Look is dense pro-tool style, mockups approved for grid, viewer, sidebar and tabs.
 - Palette follows the Claude desktop app dark mode (warm grays).
 - Reject key is X only.
 - Viewer filmstrip is on by default, current photo highlighted.

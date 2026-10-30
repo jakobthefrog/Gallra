@@ -53,6 +53,12 @@ struct ViewerView: View {
                     .font(.system(size: 15, weight: .medium)).foregroundStyle(Theme.textPrimary)
                     .padding(8).background(.black.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
                 Spacer()
+                if !tab.cameraInfo.summary.isEmpty {
+                    Text(tab.cameraInfo.summary)
+                        .font(.system(size: 11).monospacedDigit()).foregroundStyle(Theme.textSecondary)
+                        .padding(.horizontal, 8).padding(.vertical, 4)
+                        .background(.black.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
+                }
             }
             Spacer()
             Text("\(tab.selection + 1) / \(tab.photos.count)")
@@ -88,8 +94,8 @@ struct FilmstripView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 4) {
                     ForEach(Array(tab.photos.enumerated()), id: \.element.id) { index, photo in
-                        ThumbnailView(photo: photo, size: 64, isSelected: false)
-                            .opacity(index == tab.selection ? 1 : 0.7)
+                        ThumbnailView(photo: photo, size: 48, isSelected: false)
+                            .opacity(index == tab.selection ? 1 : 0.65)
                             .overlay { if index == tab.selection { RoundedRectangle(cornerRadius: 4).stroke(Theme.accent, lineWidth: 2) } }
                             .id(photo.id)
                             .onTapGesture { tab.select(index) }
@@ -100,7 +106,7 @@ struct FilmstripView: View {
                 if tab.photos.indices.contains(new) { proxy.scrollTo(tab.photos[new].id, anchor: .center) }
             }
         }
-        .frame(height: 72)
+        .frame(height: 56)
         .background(Theme.window)
         .overlay(alignment: .top) { Theme.line.frame(height: 1) }
     }

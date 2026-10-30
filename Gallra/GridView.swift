@@ -4,7 +4,7 @@ import GallraCore
 /// Scrollable thumbnail grid. Single click selects; double click opens the viewer.
 struct GridView: View {
     let tab: FolderTab
-    private let gap: Double = 4
+    private let gap: Double = 3
     @State private var pinchBase: Double?
 
     var body: some View {
@@ -80,8 +80,8 @@ private struct SceneHeader: View {
             if section.best > 0 { Text(String(repeating: "★", count: section.best)).foregroundStyle(Theme.star) }
             Spacer()
         }
-        .font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
-        .padding(.horizontal, 6).frame(height: 22).frame(maxWidth: .infinity)
+        .font(.system(size: 11).monospacedDigit()).foregroundStyle(Theme.textSecondary)
+        .padding(.horizontal, 4).frame(height: 18).frame(maxWidth: .infinity)
         .background(targeted ? Theme.accent.opacity(0.35) : Theme.canvas)
         .contentShape(Rectangle())
         .onTapGesture(perform: toggle)

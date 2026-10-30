@@ -24,7 +24,10 @@ final class FolderTab: Identifiable {
     private var writeChain: Task<Void, Never>?
     var isLoading = false
     var errorMessage: String?
-    var selection = 0
+    var selection = 0 { didSet { if selection != oldValue { loadCameraInfo() } } }
+    /// Shooting details of the selected photo (empty until read).
+    private(set) var cameraInfo = CameraInfo()
+    private var cameraTask: Task<Void, Never>?
     var mode: Mode = .grid
     var cellSize: Double = 160
     var showFilmstrip = true
@@ -221,6 +224,17 @@ final class FolderTab: Identifiable {
         photos = ordered
         if let keep, let index = photos.firstIndex(where: { $0.id.path == keep }) { selection = index }
         else { selection = min(selection, max(photos.count - 1, 0)) }
+        loadCameraInfo()
+    }
+
+    /// Reads the selected photo's lens, aperture, shutter and ISO in the background.
+    private func loadCameraInfo() {
+        cameraTask?.cancel()
+        guard let url = currentPhoto?.url else { cameraInfo = CameraInfo(); return }
+        cameraTask = Task { [weak self] in
+            let info = await Task.detached { PhotoMetadataReader().cameraInfo(url) }.value
+            if !Task.isCancelled { self?.cameraInfo = info }
+        }
     }
 
     /// Shows a toast. `undoable` adds an Undo button and keeps it up for 8 s instead of 4.
