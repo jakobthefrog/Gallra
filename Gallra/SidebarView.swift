@@ -87,7 +87,7 @@ private struct FolderRow: View {
                             .contentShape(Rectangle())
                     }.buttonStyle(.plain)
                 } else { Spacer().frame(width: 26) }
-                Image(systemName: "folder").foregroundStyle(Theme.textSecondary)
+                Image(systemName: "folder").foregroundStyle(Theme.accent)
                 Text(title ?? url.lastPathComponent).lineLimit(1).foregroundStyle(Theme.textPrimary)
                 Spacer(minLength: 4)
                 if hovering || model.isFavorite(url) {
