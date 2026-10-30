@@ -10,6 +10,7 @@ struct GallraApp: App {
         WindowGroup {
             ContentView().environment(model)
         }
+        .windowToolbarStyle(.unifiedCompact(showsTitle: false))   // tabs share the row with the window buttons
         .commands {
             CommandGroup(after: .appInfo) {
                 Button("Check for Updates…") { updater.checkForUpdates() }

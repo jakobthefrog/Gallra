@@ -16,7 +16,7 @@ struct TabBarView: View {
                 .accessibilityLabel("New tab")
             Spacer(minLength: 0)
         }
-        .frame(height: 28)
+        .frame(height: 30)
         .background(Theme.canvas)
         .overlay(alignment: .bottom) { Theme.line.frame(height: 1) }
     }
@@ -38,7 +38,7 @@ private struct TabItem: View {
                 .opacity(active || hovering ? 1 : 0)
                 .accessibilityLabel("Close tab")
         }
-        .padding(.horizontal, 12).frame(minWidth: 100, maxWidth: 200, minHeight: 28)
+        .padding(.horizontal, 12).frame(minWidth: 100, maxWidth: 200, minHeight: 30)
         .background(active ? Theme.window : (hovering ? Theme.hover : .clear))
         .overlay(alignment: .top) { if active { Theme.accent.frame(height: 2) } }
         .contentShape(Rectangle())

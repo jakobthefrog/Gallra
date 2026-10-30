@@ -8,7 +8,6 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TabBarView()
             GeometryReader { geo in
                 HStack(spacing: 0) {
                     if model.sidebarVisible {
@@ -26,6 +25,11 @@ struct ContentView: View {
         .preferredColorScheme(.dark)
         .tint(Theme.accent)
         .frame(minWidth: 700, minHeight: 450)
+        .toolbar {
+            ToolbarItem(placement: .navigation) { TabBarView().frame(minWidth: 300, maxWidth: .infinity) }
+        }
+        .toolbarBackground(Theme.canvas, for: .windowToolbar)
+        .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
         .sheet(isPresented: .init(get: { !hasSeenWelcome }, set: { hasSeenWelcome = !$0 })) {
             WelcomeView { hasSeenWelcome = true }
         }
