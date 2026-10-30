@@ -21,7 +21,7 @@ Rule: one stage per chat session. Finish, tick boxes, commit, then start a fresh
 - [x] Sidebar + favorites, tabs, thumbnail grid with magnify slider, single-photo viewer, keyboard navigation
 
 ## Stage 4: Cull actions
-- [ ] Star rating (keys 1-3, 0 to clear), rating write, filters, move-to-Rejected with undo, "move all unrated" action (files with no rating field count as unrated)
+- [x] Star rating (keys 1-3, 0 to clear), rating write, filters, move-to-Rejected with undo, "move all unrated" action (files with no rating field count as unrated)
 
 ## Stage 5: Compare
 - [ ] Side-by-side with linked zoom and pan

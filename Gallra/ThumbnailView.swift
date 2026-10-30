@@ -32,6 +32,15 @@ struct ThumbnailView: View {
                     .background(LinearGradient(colors: [.clear, .black.opacity(0.7)], startPoint: .top, endPoint: .bottom))
             }
         }
+        .overlay(alignment: .topLeading) {
+            if let stars = photo.rating, stars > 0, size >= 80 {
+                Text(String(repeating: "★", count: stars))
+                    .font(.system(size: 11)).foregroundStyle(.yellow)
+                    .padding(.horizontal, 4).padding(.vertical, 2)
+                    .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 3))
+                    .padding(4)
+            }
+        }
         .clipShape(RoundedRectangle(cornerRadius: 4))
         .overlay { if isSelected { RoundedRectangle(cornerRadius: 4).stroke(Theme.accent, lineWidth: 2) } }
         .onHover { hovering = $0 }

@@ -10,6 +10,9 @@ final class AppModel {
     let scanner: FolderScanner?
     let browser = FolderBrowser()
     let images: ImageStore
+    let ratingWriter = RatingWriter()
+    /// Reject actions that can still be undone, newest last.
+    var undoStack: [MoveBatch] = []
 
     var tabs: [FolderTab] = []
     var selectedTabID: UUID?
@@ -78,6 +81,15 @@ final class AppModel {
         panel.prompt = "Open"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         if inNewTab { openInNewTab(url) } else { open(url) }
+    }
+
+    /// Puts the most recent reject action back.
+    func undoLastReject() {
+        guard let batch = undoStack.popLast() else { selectedTab?.showNotice("Nothing to undo."); return }
+        let failed = RejectService().undo(batch)
+        selectedTab?.showNotice(failed.isEmpty ? "Restored \(batch.files.count) photo(s)."
+                                               : "Could not restore: \(failed.joined(separator: ", ")).")
+        for tab in tabs { tab.reload() }
     }
 
     // MARK: Favorites

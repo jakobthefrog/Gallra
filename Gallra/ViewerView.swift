@@ -49,7 +49,7 @@ struct ViewerView: View {
     private var overlay: some View {
         VStack {
             HStack {
-                Text(tab.currentPhoto?.fileName ?? "")
+                Text((tab.currentPhoto?.fileName ?? "") + starText)
                     .font(.system(size: 15, weight: .medium)).foregroundStyle(Theme.textPrimary)
                     .padding(8).background(.black.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
                 Spacer()
@@ -62,6 +62,11 @@ struct ViewerView: View {
         }
         .padding(12)
         .allowsHitTesting(false)
+    }
+
+    private var starText: String {
+        let stars = tab.currentPhoto?.rating ?? 0
+        return stars > 0 ? "  " + String(repeating: "★", count: stars) : ""
     }
 
     private func showOverlay() {
