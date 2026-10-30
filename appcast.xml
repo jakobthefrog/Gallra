@@ -9,7 +9,7 @@
             <sparkle:shortVersionString>1.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <enclosure url="https://github.com/jakobthefrog/Gallra/releases/download/v1.0/Gallra-1.0.zip"
-                       sparkle:edSignature="MrpEpW4FPzJa6ScDGmL2HdWCYBGnGZ53LnQXofIW4C+Q8lXdBdEwYQLusARNOrh8BeKEj6ORIRWz4h57qUkRBw==" length="1611154"
+                       sparkle:edSignature="XSRiCfsj8pHUOA48bfAKREiGYMUsPyUvPBo6oflzRrmGXzi6I0Fjxgl14GiA9ykMe7MnQc3AzAr8gpiOzIddBg==" length="1611148"
                        type="application/octet-stream"/>
         </item>
     </channel>
