@@ -5,6 +5,7 @@ import GallraCore
 struct ContentView: View {
     @Environment(AppModel.self) private var model
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
+    @AppStorage("sidebarWidth") private var sidebarWidth = 260.0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -12,9 +13,9 @@ struct ContentView: View {
             GeometryReader { geo in
                 HStack(spacing: 0) {
                     if model.sidebarVisible {
-                        // 10% of the window, but never too narrow to read folder names.
-                        SidebarView(width: max(140, geo.size.width * 0.10))
+                        SidebarView(width: min(max(sidebarWidth, 160), max(160, geo.size.width * 0.5)))
                         Theme.line.frame(width: 1)
+                            .overlay(SidebarResizeHandle(width: $sidebarWidth))
                     }
                     if let tab = model.selectedTab {
                         TabContentView(tab: tab).id(tab.id)
@@ -217,4 +218,24 @@ private struct TabsToolbarItem: ToolbarContent {
     }
 
     private var tabs: some View { TabBarView().frame(minWidth: 300, maxWidth: .infinity) }
+}
+
+/// Thin invisible strip on the sidebar edge; drag to resize.
+private struct SidebarResizeHandle: View {
+    @Binding var width: Double
+    @State private var startWidth: Double?
+
+    var body: some View {
+        Color.clear.frame(width: 9).contentShape(Rectangle())
+            .onHover { inside in
+                if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
+            }
+            .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                .onChanged { drag in
+                    let start = startWidth ?? width
+                    startWidth = start
+                    width = min(max(start + drag.translation.width, 160), 600)
+                }
+                .onEnded { _ in startWidth = nil })
+    }
 }

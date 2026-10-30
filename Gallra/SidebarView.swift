@@ -74,9 +74,10 @@ private struct FolderRow: View {
                 if expandable {
                     Button { toggle() } label: {
                         Image(systemName: expanded ? "chevron.down" : "chevron.right")
-                            .font(.system(size: 10, weight: .semibold)).frame(width: 14)
+                            .font(.system(size: 11, weight: .semibold)).frame(width: 26, height: 26)
+                            .contentShape(Rectangle())
                     }.buttonStyle(.plain)
-                } else { Spacer().frame(width: 14) }
+                } else { Spacer().frame(width: 26) }
                 Image(systemName: "folder").foregroundStyle(Theme.textSecondary)
                 Text(title ?? url.lastPathComponent).lineLimit(1).foregroundStyle(Theme.textPrimary)
                 Spacer(minLength: 4)
@@ -92,7 +93,7 @@ private struct FolderRow: View {
                 }
             }
             .font(.system(size: 13))
-            .padding(.vertical, 4).padding(.horizontal, 6)
+            .padding(.vertical, 1).padding(.horizontal, 4)
             .padding(.leading, Double(depth) * 14)
             .background((isCurrent || hovering) ? Theme.hover : .clear, in: RoundedRectangle(cornerRadius: 6))
             .contentShape(Rectangle())
