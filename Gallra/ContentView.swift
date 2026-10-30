@@ -4,6 +4,7 @@ import GallraCore
 /// Main window: tab bar, sidebar, and the selected tab's grid or viewer.
 struct ContentView: View {
     @Environment(AppModel.self) private var model
+    @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,6 +25,9 @@ struct ContentView: View {
         .background(Theme.window)
         .preferredColorScheme(.dark)
         .frame(minWidth: 700, minHeight: 450)
+        .sheet(isPresented: .init(get: { !hasSeenWelcome }, set: { hasSeenWelcome = !$0 })) {
+            WelcomeView { hasSeenWelcome = true }
+        }
     }
 }
 

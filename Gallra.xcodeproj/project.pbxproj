@@ -160,14 +160,14 @@
 		A10000000000000000000013 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = NO;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Config/Gallra-Info.plist;
+				INFOPLIST_FILE = "Config/Gallra-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Gallra;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				MARKETING_VERSION = 1.0;
@@ -180,14 +180,14 @@
 		A10000000000000000000014 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = NO;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Config/Gallra-Info.plist;
+				INFOPLIST_FILE = "Config/Gallra-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Gallra;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				MARKETING_VERSION = 1.0;
@@ -239,14 +239,14 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A10000000000000000000007 /* GallraCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = GallraCore;
+		};
 		A10000000000000000000020 /* Sparkle */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A10000000000000000000022 /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
-		};
-		A10000000000000000000007 /* GallraCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = GallraCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

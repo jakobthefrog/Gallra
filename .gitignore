@@ -5,3 +5,4 @@ DerivedData/
 *.xcuserstate
 Gallra-TestPhotos/
 dist/
+build-release/
