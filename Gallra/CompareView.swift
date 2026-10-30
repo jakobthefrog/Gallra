@@ -116,16 +116,21 @@ private struct ComparePane: View {
                 } else {
                     ProgressView().controlSize(.small)
                 }
+            }
+            .allowsHitTesting(false)   // display only; the pane-sized layer below takes the mouse
+            // Pin the layout box to the pane: a zoomed photo is bigger than the pane, and without
+            // this the box grows, drifts to the top-left and its mouse area covers the other pane.
+            .frame(width: geo.size.width, height: geo.size.height)
+            .clipped()
+            // Added after the frame so the mouse area is exactly the pane. Inside the ZStack it grew
+            // with the zoomed photo and, in the right pane, covered the left pane and stole its clicks.
+            .overlay {
                 PaneInteraction(
                     onPan: { state.pan(pane: pane, movement: $0, independent: $1) },
                     onZoom: { state.zoom(pane: pane, factor: $0, at: $1) },
                     onClick: { state.active = pane },
                     onDoubleClick: { state.active = pane; state.toggleActualSize(backingScale: NSScreen.main?.backingScaleFactor ?? 2, at: $0) })
             }
-            // Pin the layout box to the pane: a zoomed photo is bigger than the pane, and without
-            // this the box grows, drifts to the top-left and its mouse area covers the other pane.
-            .frame(width: geo.size.width, height: geo.size.height)
-            .clipped()
             .overlay(alignment: .topLeading) { header }
             .overlay(alignment: .top) { if state.active == pane { Theme.accent.frame(height: 2) } }
             .onChange(of: geo.size, initial: true) { _, _ in publishMetrics(geo.size) }
