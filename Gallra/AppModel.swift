@@ -10,6 +10,7 @@ final class AppModel {
     let scanner: FolderScanner?
     let browser = FolderBrowser()
     let images: ImageStore
+    let previews: PreviewService
     let similarity: SimilarityService?
     let ratingWriter = RatingWriter()
     /// One step Cmd+Z can reverse.
@@ -45,6 +46,7 @@ final class AppModel {
 
     init() {
         let previews = PreviewService()
+        self.previews = previews
         images = ImageStore(previews: previews)
         do {
             let catalog = try Catalog()
@@ -59,6 +61,21 @@ final class AppModel {
         }
         newTab()
         Task { await reloadFavorites() }
+    }
+
+    // MARK: Cache
+
+    /// Bytes used on disk by previews and the photo-details database.
+    func cacheBytes() async -> Int64 {
+        let previews = self.previews, catalog = self.catalog
+        return await previews.diskCacheBytes() + (catalog?.fileBytes() ?? 0)
+    }
+
+    /// Deletes previews and cached photo details, then reloads open folders.
+    func clearCache() async {
+        await previews.clearDiskCache()
+        try? await catalog?.clearCache()
+        for tab in tabs where tab.folder != nil { tab.reload() }
     }
 
     // MARK: Tabs

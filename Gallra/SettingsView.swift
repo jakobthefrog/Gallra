@@ -4,6 +4,8 @@ import AppKit
 /// The Gallra > Settings window: shortcuts to the macOS privacy pages, and browsing defaults.
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
+    @State private var cacheBytes: Int64?
+    @State private var confirmClear = false
 
     var body: some View {
         @Bindable var model = model
@@ -28,6 +30,26 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented).fixedSize()
             }
+            Section("Cache") {
+                Text("Previews and photo details Gallra saved to open folders faster. They are rebuilt as you browse. Your photos, ratings, favorites and hand-made groups are not touched.")
+                    .font(.callout).foregroundStyle(.secondary)
+                LabeledContent("Cache size") {
+                    HStack {
+                        Text(cacheBytes.map { $0.formatted(.byteCount(style: .file)) } ?? "Calculating…")
+                            .foregroundStyle(.secondary)
+                        Button("Clear cache…") { confirmClear = true }
+                    }
+                }
+            }
+        }
+        .task { cacheBytes = await model.cacheBytes() }
+        .confirmationDialog("Clear the cache?", isPresented: $confirmClear, titleVisibility: .visible) {
+            Button("Clear cache") {
+                Task { await model.clearCache(); cacheBytes = await model.cacheBytes() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Folders will open more slowly once while Gallra rebuilds it. Your photos are not touched.")
         }
         .formStyle(.grouped)
         .frame(width: 520)

@@ -78,6 +78,13 @@ public actor PreviewService {
         }
     }
 
+    /// Total size in bytes of the preview files on disk.
+    public func diskCacheBytes() -> Int64 {
+        let files = (try? FileManager.default.contentsOfDirectory(
+            at: diskFolder, includingPropertiesForKeys: [.fileSizeKey])) ?? []
+        return files.reduce(0) { $0 + Int64((try? $1.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) }
+    }
+
     /// Deletes the disk cache (previews are rebuilt on demand).
     public func clearDiskCache() {
         memory.removeAllObjects()

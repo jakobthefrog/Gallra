@@ -104,3 +104,21 @@ import Foundation
         #expect(FolderScanner.hasPhotosInSubfolders(of: root))
     }
 }
+
+@Suite struct ClearCacheTests {
+    @Test func clearKeepsFavoritesAndGroups() async throws {
+        let dir = try Scratch.folder()
+        let catalog = try Catalog(url: FileManager.default.temporaryDirectory
+            .appendingPathComponent("gallra-cat-\(UUID().uuidString)/catalog.sqlite"))
+        let folder = FolderScanner.canonicalPath(dir)
+        _ = try await FolderScanner(catalog: catalog).scan(dir)
+        try await catalog.addFavorite("/some/folder")
+        try await catalog.setManualGroups(["/a.cr3": "g1"], folder: folder)
+        #expect(catalog.fileBytes() > 0)
+
+        try await catalog.clearCache()
+        #expect(try await catalog.photos(inFolder: folder).isEmpty)
+        #expect(try await catalog.favorites() == ["/some/folder"])
+        #expect(try await catalog.manualGroups(inFolder: folder) == ["/a.cr3": "g1"])
+    }
+}

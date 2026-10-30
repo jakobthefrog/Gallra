@@ -17,8 +17,27 @@ public actor Catalog {
             .appendingPathComponent("Gallra/catalog.sqlite")
     }
 
+    private let url: URL
+
+    /// Size in bytes of the database file (including its journal files).
+    public nonisolated func fileBytes() -> Int64 {
+        ["", "-wal", "-shm", "-journal"].reduce(0) {
+            let attrs = try? FileManager.default.attributesOfItem(atPath: url.path + $1)
+            return $0 + ((attrs?[.size] as? NSNumber)?.int64Value ?? 0)
+        }
+    }
+
+    /// Forgets the cached photo details and scene fingerprints. Favorites and hand-made groups
+    /// are the user's own choices, so they stay.
+    public func clearCache() throws {
+        try Catalog.exec(db, "DELETE FROM photos")
+        try Catalog.exec(db, "DELETE FROM prints")
+        try Catalog.exec(db, "VACUUM")
+    }
+
     /// Opens (creating if needed) the database at `url`.
     public init(url: URL = Catalog.defaultURL) throws {
+        self.url = url
         try FileManager.default.createDirectory(
             at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         var handle: OpaquePointer?
