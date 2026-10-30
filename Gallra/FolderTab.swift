@@ -18,6 +18,8 @@ final class FolderTab: Identifiable {
     var filter: RatingFilter = .all { didSet { applyFilter() } }
     /// Short message about the last action (shown in the status bar for a few seconds).
     var notice: String?
+    var noticeUndoable = false
+    var noticeIsError = false
     private var noticeTask: Task<Void, Never>?
     private var writeChain: Task<Void, Never>?
     var isLoading = false
@@ -221,11 +223,14 @@ final class FolderTab: Identifiable {
         else { selection = min(selection, max(photos.count - 1, 0)) }
     }
 
-    func showNotice(_ text: String) {
+    /// Shows a toast. `undoable` adds an Undo button and keeps it up for 8 s instead of 4.
+    func showNotice(_ text: String, undoable: Bool = false, isError: Bool = false) {
         notice = text
+        noticeUndoable = undoable
+        noticeIsError = isError
         noticeTask?.cancel()
         noticeTask = Task {
-            try? await Task.sleep(for: .seconds(4))
+            try? await Task.sleep(for: .seconds(undoable ? 8 : 4))
             if !Task.isCancelled { notice = nil }
         }
     }
@@ -248,9 +253,9 @@ final class FolderTab: Identifiable {
             if case .failure(let error) = result {
                 self.update(path) { $0.rating = previous }
                 if case RatingError.noRatingField = error {
-                    self.showNotice("\(URL(fileURLWithPath: path).lastPathComponent) has no rating field; left unchanged.")
+                    self.showNotice("\(URL(fileURLWithPath: path).lastPathComponent) has no rating field; left unchanged.", isError: true)
                 } else {
-                    self.showNotice("Could not write rating (file left unchanged).")
+                    self.showNotice("Could not write rating (file left unchanged).", isError: true)
                 }
             }
             self.reload()
@@ -290,9 +295,9 @@ final class FolderTab: Identifiable {
         if mode == .viewer && photos.isEmpty { mode = .grid }
         if mode == .compare { closeCompare() }
         marked.subtract(gone)
-        var text = "Moved \(batch.files.count) to \(FolderBrowser.rejectedFolderName). Cmd+Z to undo."
+        var text = "Moved \(batch.files.count) photo\(batch.files.count == 1 ? "" : "s") to Rejected · Undo (Cmd+Z)"
         if !failures.isEmpty { text += " \(failures.count) could not be moved." }
-        showNotice(text)
+        showNotice(text, undoable: !batch.isEmpty, isError: batch.isEmpty)
         reload()
     }
 

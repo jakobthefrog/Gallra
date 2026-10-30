@@ -80,7 +80,7 @@ private struct FolderRow: View {
                 if hovering || model.isFavorite(url) {
                     Button { model.toggleFavorite(url) } label: {
                         Image(systemName: model.isFavorite(url) ? "star.fill" : "star").font(.system(size: 11))
-                            .foregroundStyle(model.isFavorite(url) ? Color(hex: 0xF2C14E) : Theme.textSecondary)
+                            .foregroundStyle(model.isFavorite(url) ? Theme.star : Theme.textSecondary)
                     }.buttonStyle(.plain)
                     .accessibilityLabel(model.isFavorite(url) ? "Remove from favorites" : "Add to favorites")
                 }

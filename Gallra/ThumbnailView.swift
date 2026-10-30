@@ -36,7 +36,7 @@ struct ThumbnailView: View {
         .overlay(alignment: .topLeading) {
             if let stars = photo.rating, stars > 0, size >= 80 {
                 Text(String(repeating: "★", count: stars))
-                    .font(.system(size: 11)).foregroundStyle(.yellow)
+                    .font(.system(size: 11)).foregroundStyle(Theme.star)
                     .padding(.horizontal, 4).padding(.vertical, 2)
                     .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 3))
                     .padding(4)

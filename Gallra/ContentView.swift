@@ -38,6 +38,7 @@ struct TabContentView: View {
                 Theme.canvas
                 content
             }
+            .overlay(alignment: .bottom) { toast }
             statusBar
         }
         .focusable()
@@ -98,13 +99,31 @@ struct TabContentView: View {
         .background(Theme.raised)
     }
 
+    /// Short message at the bottom of the content; has an Undo button after a move.
+    @ViewBuilder private var toast: some View {
+        if let notice = tab.notice {
+            HStack(spacing: 12) {
+                Text(notice).lineLimit(2)
+                    .foregroundStyle(tab.noticeIsError ? Theme.reject : Theme.textPrimary)
+                if tab.noticeUndoable {
+                    Button("Undo") { model.undoLast() }.buttonStyle(.plain).foregroundStyle(Theme.accent)
+                }
+            }
+            .font(.system(size: 13))
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            .background(Theme.raised, in: RoundedRectangle(cornerRadius: 10))
+            .overlay { RoundedRectangle(cornerRadius: 10).stroke(Theme.line, lineWidth: 1) }
+            .padding(.bottom, 16)
+            .transition(.opacity)
+        }
+    }
+
     private var statusBar: some View {
         HStack {
             Text(tab.folder == nil ? "" : "\(countText) · \(tab.folder?.path ?? "")")
                 .lineLimit(1).truncationMode(.middle)
             Spacer()
             if let (done, total) = tab.groupProgress { Text("Grouping \(done)/\(total)…") }
-            if let notice = tab.notice { Text(notice).foregroundStyle(Theme.accent).lineLimit(1) }
         }
         .font(.system(size: 11).monospacedDigit()).foregroundStyle(Theme.textSecondary)
         .padding(.horizontal, 12).frame(height: 24)

@@ -77,7 +77,7 @@ private struct SceneHeader: View {
         HStack(spacing: 6) {
             Image(systemName: section.collapsed ? "chevron.right" : "chevron.down").font(.system(size: 9))
             Text(section.title)
-            if section.best > 0 { Text(String(repeating: "★", count: section.best)).foregroundStyle(.yellow) }
+            if section.best > 0 { Text(String(repeating: "★", count: section.best)).foregroundStyle(Theme.star) }
             Spacer()
         }
         .font(.system(size: 11)).foregroundStyle(Theme.textSecondary)

@@ -12,6 +12,8 @@ enum Theme {
     static let textSecondary = Color(hex: 0xA3A29B)
     static let textDisabled = Color(hex: 0x6B6A65)
     static let accent = Color(hex: 0x4C8DFF)
+    static let star = Color(hex: 0xF2C14E)
+    static let reject = Color(hex: 0xE5645A)
 }
 
 extension Color {

@@ -30,7 +30,7 @@ Rule: one stage per chat session. Finish, tick boxes, commit, then start a fresh
 - [x] Vision feature prints + time clustering, group UI
 
 ## Stage 7: Polish and ship
-- [ ] Performance pass on thousands of files (done: scan speed, test fix; scrolling feel still to check by hand), large-monitor layout, app icon
+- [x] Performance pass on thousands of files, large-monitor layout, app icon (scrolling feel and wide-window look still to check by hand)
 - [ ] Sparkle updates, release build, GitHub Releases, first-launch instructions for users
 
 ## Later (do not build yet)
