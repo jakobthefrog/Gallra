@@ -16,6 +16,7 @@ struct SidebarView: View {
         roots += volumes.filter {
             $0.resolvingSymlinksInPath().path != "/"
                 && (try? $0.resourceValues(forKeys: [.volumeIsBrowsableKey]).volumeIsBrowsable) != false
+                && !$0.lastPathComponent.hasPrefix("com.apple.")   // system mounts, e.g. Time Machine local snapshots
         }
         return roots
     }
