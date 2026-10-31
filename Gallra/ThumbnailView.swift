@@ -49,8 +49,10 @@ struct ThumbnailView: View {
         .animation(.easeOut(duration: 0.12), value: isSelected)
         .task(id: photo.id) {
             if let hit = model.images.cached(photo, size: .thumbnail) { image = hit; return }
-            image = await model.images.image(photo, size: .thumbnail)
-            failed = image == nil
+            let loaded = await model.images.image(photo, size: .thumbnail)
+            if Task.isCancelled { return }   // scrolled away: not a failure
+            image = loaded
+            failed = loaded == nil
         }
         .accessibilityLabel(photo.fileName)
     }

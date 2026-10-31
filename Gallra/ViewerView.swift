@@ -31,8 +31,10 @@ struct ViewerView: View {
         .task(id: tab.currentPhoto?.id) {
             guard let photo = tab.currentPhoto else { return }
             if let hit = model.images.cached(photo, size: .full) { image = hit; return }
-            // Keep the previous image on screen until the new one is ready (no flash).
-            if let loaded = await model.images.image(photo, size: .full) { image = loaded }
+            // Show the (usually cached) thumbnail right away so the right photo is on screen
+            // while the big one loads. The short delay means photos you fly past never load.
+            if let thumb = model.images.cached(photo, size: .thumbnail) { image = thumb }
+            if let loaded = await model.images.image(photo, size: .full, delay: .milliseconds(70)) { image = loaded }
         }
     }
 
