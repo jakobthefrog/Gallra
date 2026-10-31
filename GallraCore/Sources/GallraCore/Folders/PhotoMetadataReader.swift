@@ -8,7 +8,15 @@ public struct PhotoMetadataReader: Sendable {
     public func read(_ url: URL) -> (captureDate: Date?, rating: Int?) {
         let options = [kCGImageSourceShouldCache: false] as CFDictionary
         guard let source = CGImageSourceCreateWithURL(url as CFURL, options) else { return (nil, nil) }
-        return (captureDate(source), rating(source))
+        var stars = rating(source)
+        // macOS does not expose the XMP that Fujifilm RAF files carry inside their embedded JPEG,
+        // so for RAF read the rating digit straight from that block (same scan the writer uses).
+        if stars == nil, PhotoFormat(fileExtension: url.pathExtension) == .raf,
+           let data = try? Data(contentsOf: url, options: .alwaysMapped),
+           let offset = try? RatingWriter.digitOffset(in: data) {
+            stars = Int(data[offset] - UInt8(ascii: "0"))
+        }
+        return (captureDate(source), stars)
     }
 
     private func captureDate(_ source: CGImageSource) -> Date? {

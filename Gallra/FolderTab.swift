@@ -405,6 +405,8 @@ final class FolderTab: Identifiable {
                 self.update(path) { $0.rating = previous }
                 if case RatingError.noRatingField = error {
                     self.showNotice("\(URL(fileURLWithPath: path).lastPathComponent) has no rating field; left unchanged.", isError: true)
+                } else if case RatingError.formatNotTested = error {
+                    self.showNotice("Saving ratings to this file type isn't supported yet; left unchanged.", isError: true)
                 } else {
                     self.showNotice("Could not write rating (file left unchanged).", isError: true)
                 }

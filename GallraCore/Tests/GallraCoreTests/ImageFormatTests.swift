@@ -107,7 +107,7 @@ import UniformTypeIdentifiers
         return url
     }
 
-    @Test(arguments: ["_web.jpg", "_8bit.tif", "_16bit.tif", ".dng"])
+    @Test(arguments: ["_web.jpg", "_8bit.tif", "_16bit.tif", ".dng", "DSCF3883.RAF", "DSCF6243.RAF"])
     func ratesRealSample(suffix: String) async throws {
         let url = try copy(suffix)
         let dir = url.deletingLastPathComponent()
@@ -115,11 +115,19 @@ import UniformTypeIdentifiers
         let start = PhotoMetadataReader().read(url)
         print("SAMPLE \(url.lastPathComponent) format=\(photo.format) rating=\(String(describing: start.rating)) date=\(String(describing: start.captureDate))")
 
+        // Filters read the date and shooting details; they must be there for every format.
+        let info = PhotoMetadataReader().cameraInfo(url)
+        print("SAMPLE \(url.lastPathComponent) info: \(info.summary)")
+        #expect(start.captureDate != nil)
+        #expect(info.iso != nil || suffix.hasSuffix("tif"))
+
         let clock = ContinuousClock()
+        #expect(photo.format == PhotoFormat(fileExtension: url.pathExtension))
         let t = try await clock.measure {
             let service = PreviewService(diskFolder: dir.appendingPathComponent("cache"))
             let data = try await service.preview(for: photo, size: .full)
             #expect(!data.isEmpty)
+            #expect(!(try await service.preview(for: photo, size: .thumbnail)).isEmpty)
         }
         print("SAMPLE \(suffix) full preview: \(t)")
 
@@ -133,5 +141,26 @@ import UniformTypeIdentifiers
         #expect(fp0 == fp1)
         let left = try FileManager.default.contentsOfDirectory(atPath: dir.path).filter { $0.hasPrefix(".gallra-") }
         #expect(left.isEmpty)
+    }
+}
+
+@Suite struct OtherCameraFormatTests {
+    @Test func extensionsMapToFormats() {
+        let expected: [(String, PhotoFormat)] = [("ARW", .arw), ("nef", .nef), ("RAF", .raf), ("cr2", .cr2),
+                                                 ("ORF", .orf), ("rw2", .rw2), ("HEIC", .heic), ("heif", .heic), ("hif", .heic)]
+        for (ext, format) in expected { #expect(PhotoFormat(fileExtension: ext) == format) }
+    }
+
+    /// Formats not yet tried on real files are listed but never written to.
+    @Test(arguments: ["arw", "nef", "cr2", "orf", "rw2", "heic"])
+    func untestedFormatsRefuseRatingWrites(ext: String) throws {
+        let dir = try Scratch.folder(cr3: 1, threeFR: 0)
+        let cr3 = try FolderBrowser().photos(in: dir)[0].url
+        let url = dir.appendingPathComponent("fake.\(ext)")
+        try FileManager.default.moveItem(at: cr3, to: url)   // a file with a valid rating field, wrong extension
+        let before = try Data(contentsOf: url)
+        #expect(try FolderBrowser().photos(in: dir).count == 1)
+        #expect(throws: RatingError.formatNotTested) { try RatingWriter().write(rating: 3, to: url) }
+        #expect(try Data(contentsOf: url) == before)
     }
 }

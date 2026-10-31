@@ -39,7 +39,9 @@ Rule: one stage per chat session. Finish, tick boxes, commit, then start a fresh
 - [x] JPG/JPEG, TIFF (8/16 bit) and DNG are listed, previewed and read (`PhotoFormat`)
 - [x] Rating write for files without a rating field: safe ImageIO rewrite with backup + verify (`RatingRewriter`), tested on generated JPG/TIFF 8/16 bit
 - [x] Tested on COPIES of real samples: camera JPG, 8-bit and 16-bit TIFF (ImageIO rewrite), Lightroom DNG (ImageIO cannot write DNG, so the rating goes into the XMP padding: same file size, nothing else moves)
-- [ ] Decide on HEIC and other RAW types (ARW, NEF, RAF, CR2...)
+- [x] Added HEIC/HEIF, Sony ARW, Nikon NEF, Fujifilm RAF, Canon CR2, Olympus ORF, Panasonic RW2: listed, previewed, filtered
+- [x] Fujifilm RAF rating write tested on copies of real X-T5 files (rating lives in XMP inside the embedded JPEG; Gallra reads it from there)
+- [ ] Rating write is blocked for ARW, NEF, CR2, ORF, RW2, HEIC until tested on real files (`PhotoFormat.ratingWriteTested`)
 
 ## Later (do not build yet)
 - Remote companion server + mobile apps

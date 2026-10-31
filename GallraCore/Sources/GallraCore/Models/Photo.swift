@@ -7,6 +7,13 @@ public enum PhotoFormat: String, Codable, Sendable, CaseIterable {
     case dng
     case jpg
     case tiff
+    case heic
+    case arw    // Sony
+    case nef    // Nikon
+    case raf    // Fujifilm
+    case cr2    // Canon (older)
+    case orf    // Olympus / OM System
+    case rw2    // Panasonic
 
     /// Returns the format for a file extension (case-insensitive), or nil if unsupported.
     public init?(fileExtension: String) {
@@ -16,7 +23,22 @@ public enum PhotoFormat: String, Codable, Sendable, CaseIterable {
         case "dng": self = .dng
         case "jpg", "jpeg": self = .jpg
         case "tif", "tiff": self = .tiff
+        case "heic", "heif", "hif": self = .heic
+        case "arw": self = .arw
+        case "nef": self = .nef
+        case "raf": self = .raf
+        case "cr2": self = .cr2
+        case "orf": self = .orf
+        case "rw2": self = .rw2
         default: return nil
+        }
+    }
+
+    /// Formats whose rating writing has been tried on real files. Others open and preview but are never written to.
+    var ratingWriteTested: Bool {
+        switch self {
+        case .cr3, .threeFR, .dng, .jpg, .tiff, .raf: true
+        default: false
         }
     }
 

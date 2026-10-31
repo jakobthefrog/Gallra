@@ -5,6 +5,8 @@ public enum RatingError: Error, Sendable, Equatable {
     /// The file has no rating field to change; it is left untouched.
     case noRatingField
     case invalidRating
+    /// Rating writing for this file type has not been tested on real files yet; the file is never touched.
+    case formatNotTested
     /// The written file failed the checks; the original was kept or restored.
     case verificationFailed(String)
 }
@@ -25,6 +27,7 @@ public struct RatingWriter: Sendable {
     /// Sets the rating (0-3 used by the app; 0-5 accepted) of the file at `url`.
     public func write(rating: Int, to url: URL) throws {
         guard (0...5).contains(rating) else { throw RatingError.invalidRating }
+        guard PhotoFormat(fileExtension: url.pathExtension)?.ratingWriteTested == true else { throw RatingError.formatNotTested }
         let fm = FileManager.default
         let original = try Data(contentsOf: url, options: .alwaysMapped)
         let offset: Int
@@ -39,8 +42,9 @@ public struct RatingWriter: Sendable {
 
         let id = UUID().uuidString
         let dir = url.deletingLastPathComponent()
-        let temp = dir.appendingPathComponent(".gallra-tmp-\(id)")
-        let backup = dir.appendingPathComponent(".gallra-backup-\(id)")
+        // Keep the extension: reading the rating back depends on the file type.
+        let temp = dir.appendingPathComponent(".gallra-tmp-\(id).\(url.pathExtension)")
+        let backup = dir.appendingPathComponent(".gallra-backup-\(id).\(url.pathExtension)")
         defer { try? fm.removeItem(at: temp) }
 
         try fm.copyItem(at: url, to: backup)
