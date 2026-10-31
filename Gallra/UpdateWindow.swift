@@ -40,48 +40,39 @@ struct UpdateView: View {
     }
 
     private func found(version: String, notes: String?, reply: @escaping (UpdateChoice) -> Void) -> some View {
-        HStack(spacing: 0) {
-            VStack(spacing: 8) {
-                Spacer(minLength: 0)
-                VStack(spacing: 2) {
-                    Text("“Hurrää, Hurrää!”").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.onAccent)
-                }
-                .padding(.horizontal, 12).padding(.vertical, 8)
-                .background(Theme.textPrimary, in: RoundedRectangle(cornerRadius: 12))
-                .overlay(alignment: .bottom) { Bubble().fill(Theme.textPrimary).frame(width: 16, height: 8).offset(y: 8) }
-                Text("— Lille Preben").font(.caption).foregroundStyle(Theme.textSecondary).padding(.top, 6)
-                Image("LillePreben").resizable().scaledToFit().frame(width: 150)
-            }
-            .padding(.top, 16)
-            .frame(width: 190)
-            .frame(maxHeight: .infinity)
-            .background(Theme.canvas.ignoresSafeArea())
-            .overlay(alignment: .trailing) { Theme.line.frame(width: 1) }
+        HStack(alignment: .top, spacing: 18) {
+            Image("LillePreben").resizable().scaledToFill()
+                .frame(width: 96, height: 96).clipShape(Circle())
+                .overlay(Circle().stroke(Theme.accent, lineWidth: 2))
 
             VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Text("“Hurrää, Hurrää!”").font(.system(size: 15, weight: .bold))
+                    Text("— Lille Preben").font(.caption).foregroundStyle(Theme.textSecondary)
+                }
+                .padding(.horizontal, 12).padding(.vertical, 8)
+                .background(Theme.raised, in: RoundedRectangle(cornerRadius: 12))
+                .padding(.bottom, 6)
                 Text("A new version of Gallra is available!").font(.title3.bold())
                 Text("Gallra \(version) is now available — you have \(current).").foregroundStyle(Theme.textSecondary)
                 if let notes, !notes.isEmpty {
-                    Text("What's new").font(.headline).padding(.top, 6)
                     ScrollView { Text(notes).font(.callout).frame(maxWidth: .infinity, alignment: .leading) }
-                        .padding(10).frame(maxHeight: .infinity)
+                        .padding(10).frame(height: 100)
                         .background(Theme.canvas, in: RoundedRectangle(cornerRadius: 8))
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.line))
-                        .foregroundStyle(Theme.textSecondary)
-                } else {
-                    Spacer(minLength: 12)
+                        .foregroundStyle(Theme.textSecondary).padding(.top, 4)
                 }
-                Spacer(minLength: 0).frame(height: 4)
                 HStack(spacing: 8) {
                     Spacer()
                     button("Skip This Version") { reply(.skip) }
                     button("Remind Me Later") { reply(.later) }
                     button("Install Update", primary: true) { reply(.install) }
                 }
+                .padding(.top, 12)
             }
-            .padding(24)
         }
-        .frame(width: 580, height: 380)
+        .padding(24)
+        .frame(width: 640)
     }
 
     private var plain: some View {
@@ -126,15 +117,5 @@ struct UpdateView: View {
                 .foregroundStyle(primary ? Theme.onAccent : Theme.textPrimary)
         }
         .buttonStyle(.plain)
-    }
-}
-
-/// Little downward triangle that makes the rounded box look like a speech bubble.
-private struct Bubble: Shape {
-    func path(in r: CGRect) -> Path {
-        var p = Path()
-        p.move(to: CGPoint(x: r.minX, y: r.minY)); p.addLine(to: CGPoint(x: r.maxX, y: r.minY))
-        p.addLine(to: CGPoint(x: r.midX, y: r.maxY)); p.closeSubpath()
-        return p
     }
 }
