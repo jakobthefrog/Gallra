@@ -1,0 +1,52 @@
+<!doctype html><meta charset="utf-8"><title>Update modal mockups</title>
+<style>
+body{margin:0;padding:32px;background:#1a1918;font:13px -apple-system,Helvetica,sans-serif;color:#ECEBE6;display:flex;flex-direction:column;gap:36px;align-items:center}
+h2{margin:0 0 10px;font-size:13px;color:#A3A29B;font-weight:600}
+.modal{width:560px;background:#262624;border:1px solid #4A4A46;border-radius:14px;box-shadow:0 20px 60px #000a;overflow:hidden;display:flex}
+.body{padding:24px;flex:1;display:flex;flex-direction:column}
+h1{font-size:17px;margin:0 0 6px}
+p{margin:0 0 10px;color:#A3A29B;line-height:1.4}
+.notes{background:#1F1E1D;border:1px solid #4A4A46;border-radius:8px;padding:10px 12px;color:#A3A29B;font-size:12px;margin:4px 0 16px}
+.btns{display:flex;gap:8px;justify-content:flex-end;margin-top:auto}
+.b{padding:6px 12px;border-radius:7px;background:#3A3A37;color:#ECEBE6}
+.b.p{background:#E0701F;color:#1F1E1D;font-weight:600}
+.quote{font-style:italic;font-weight:600;color:#ECEBE6}
+.who{font-size:11px;color:#A3A29B;font-style:normal;font-weight:400;margin-top:2px}
+/* A */
+.A .side{width:190px;background:#1F1E1D;border-right:1px solid #4A4A46;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-top:16px}
+.A .side img{width:170px;display:block}
+.A .bubble{position:relative;background:#ECEBE6;color:#1F1E1D;border-radius:12px;padding:8px 12px;margin:0 12px 12px;font-weight:700;font-size:15px;text-align:center}
+.A .bubble:after{content:"";position:absolute;bottom:-8px;left:50%;margin-left:-8px;border:8px solid transparent;border-bottom:0;border-top-color:#ECEBE6}
+.A .name{font-size:11px;color:#A3A29B;margin-bottom:8px}
+/* B */
+.B .side{width:200px;position:relative;background:linear-gradient(#3A3A37,#1F1E1D);overflow:hidden}
+.B .side img{position:absolute;bottom:0;left:-10px;width:220px}
+.B .q{margin:0 0 14px;padding:10px 14px;border-left:3px solid #E0701F;background:#2f2f2c;border-radius:0 8px 8px 0}
+/* C */
+.C .body{flex-direction:row;gap:18px}
+.C .av{width:96px;height:96px;border-radius:50%;object-fit:cover;object-position:50% 20%;border:2px solid #E0701F;flex:none}
+.C .col{flex:1;display:flex;flex-direction:column}
+.C .bubble{position:relative;background:#3A3A37;border-radius:12px;padding:8px 12px;margin:0 0 12px;font-weight:700;font-size:15px}
+.C .bubble:before{content:"";position:absolute;left:-8px;top:14px;border:8px solid transparent;border-left:0;border-right-color:#3A3A37}
+</style>
+
+<div class="A"><h2>A · Character panel with speech bubble</h2>
+<div class="modal"><div class="side"><div class="bubble">“Hurrää, Hurrää!”</div><div class="name">— Lille Preben</div><img src="preben.png"></div>
+<div class="body"><h1>A new version of Gallra is available!</h1><p>Gallra 1.3.0 is now available — you have 1.2.2.</p>
+<div class="notes"><b>What's new</b><br>• Faster key-repeat browsing<br>• New formats: HEIC, ARW, NEF, RAF</div>
+<div class="btns"><span class="b">Skip This Version</span><span class="b">Remind Me Later</span><span class="b p">Install Update</span></div></div></div></div>
+
+<div class="B"><h2>B · Full-height portrait, quote in the text</h2>
+<div class="modal"><div class="side"><img src="preben.png"></div>
+<div class="body"><h1>A new version of Gallra is available!</h1>
+<div class="q"><div class="quote">“Hurrää, Hurrää!”</div><div class="who">— Lille Preben</div></div>
+<p>Gallra 1.3.0 is now available — you have 1.2.2.</p>
+<div class="notes"><b>What's new</b><br>• Faster key-repeat browsing<br>• New formats: HEIC, ARW, NEF, RAF</div>
+<div class="btns"><span class="b">Skip This Version</span><span class="b">Remind Me Later</span><span class="b p">Install Update</span></div></div></div></div>
+
+<div class="C"><h2>C · Compact round avatar</h2>
+<div class="modal"><div class="body"><img class="av" src="preben.png">
+<div class="col"><div class="bubble">“Hurrää, Hurrää!” <span class="who">— Lille Preben</span></div>
+<h1>A new version of Gallra is available!</h1><p>Gallra 1.3.0 is now available — you have 1.2.2.</p>
+<div class="notes"><b>What's new</b><br>• Faster key-repeat browsing</div>
+<div class="btns"><span class="b">Skip This Version</span><span class="b">Remind Me Later</span><span class="b p">Install Update</span></div></div></div></div></div>
