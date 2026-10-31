@@ -9,12 +9,13 @@ public enum RatingError: Error, Sendable, Equatable {
     case verificationFailed(String)
 }
 
-/// Writes a star rating into a RAW file's XMP block. The only code allowed to modify a RAW file.
+/// Writes a star rating into a photo file's XMP block. The only code allowed to modify a photo file.
 ///
 /// Method (proven in the Stage 0 spike): the rating is one digit inside the existing XMP text, so
 /// changing it moves no offsets. Steps: clone the file to a temp copy, change the digit there,
 /// verify the copy, atomically swap it in, verify again. A backup clone of the original is kept
-/// until the final check passes, and is restored if it fails.
+/// until the final check passes, and is restored if it fails. JPEG/TIFF/DNG files with no rating
+/// field take the rewrite path in `RatingRewriter.swift` instead.
 public struct RatingWriter: Sendable {
     public init() {}
 
@@ -26,7 +27,14 @@ public struct RatingWriter: Sendable {
         guard (0...5).contains(rating) else { throw RatingError.invalidRating }
         let fm = FileManager.default
         let original = try Data(contentsOf: url, options: .alwaysMapped)
-        let offset = try RatingWriter.digitOffset(in: original)
+        let offset: Int
+        do {
+            offset = try RatingWriter.digitOffset(in: original)
+        } catch RatingError.noRatingField where PhotoFormat(fileExtension: url.pathExtension)?.supportsMetadataRewrite == true {
+            // No rating field to edit in place: let ImageIO copy the file with the rating added.
+            try rewrite(rating: rating, at: url)
+            return
+        }
         if original[offset] == UInt8(ascii: "0") + UInt8(rating) { return }   // already set
 
         let id = UUID().uuidString

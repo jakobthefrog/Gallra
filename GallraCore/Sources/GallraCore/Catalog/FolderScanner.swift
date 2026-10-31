@@ -78,7 +78,7 @@ public struct FolderScanner: Sendable {
     /// Number of supported RAW files directly in `folder` (names only, no file attributes read).
     static func rawFileCount(in folder: URL) -> Int {
         let names = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
-        return names.filter { !$0.hasPrefix(".") && RawFormat(fileExtension: ($0 as NSString).pathExtension) != nil }.count
+        return names.filter { !$0.hasPrefix(".") && PhotoFormat(fileExtension: ($0 as NSString).pathExtension) != nil }.count
     }
 
     /// Returns the photos in `folder` with up-to-date metadata.

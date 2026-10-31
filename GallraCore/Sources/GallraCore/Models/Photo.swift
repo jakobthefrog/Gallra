@@ -1,18 +1,27 @@
 import Foundation
 
-/// The RAW formats Gallra understands.
-public enum RawFormat: String, Codable, Sendable, CaseIterable {
+/// The photo file formats Gallra understands (RAW and ready-made images).
+public enum PhotoFormat: String, Codable, Sendable, CaseIterable {
     case cr3
     case threeFR = "3fr"
+    case dng
+    case jpg
+    case tiff
 
     /// Returns the format for a file extension (case-insensitive), or nil if unsupported.
     public init?(fileExtension: String) {
         switch fileExtension.lowercased() {
         case "cr3": self = .cr3
         case "3fr": self = .threeFR
+        case "dng": self = .dng
+        case "jpg", "jpeg": self = .jpg
+        case "tif", "tiff": self = .tiff
         default: return nil
         }
     }
+
+    /// True for formats where ImageIO can add a rating by copying the file without re-encoding pixels.
+    var supportsMetadataRewrite: Bool { self == .jpg || self == .tiff || self == .dng }
 }
 
 /// Stable identity of a photo: volume + file number + path, never view state.
@@ -31,10 +40,10 @@ public struct PhotoID: Codable, Hashable, Sendable {
     public var rawValue: String { "\(volume):\(fileNumber):\(path)" }
 }
 
-/// One RAW file on disk, with the metadata the catalog caches.
+/// One photo file on disk, with the metadata the catalog caches.
 public struct Photo: Codable, Hashable, Sendable, Identifiable {
     public let id: PhotoID
-    public let format: RawFormat
+    public let format: PhotoFormat
     public let fileSize: Int64
     public let modified: Date
     /// When the shot was taken (EXIF), if the file says.
@@ -42,7 +51,7 @@ public struct Photo: Codable, Hashable, Sendable, Identifiable {
     /// Star rating 0-5 as stored in the file; nil if the file has no rating field (counts as unrated).
     public var rating: Int?
 
-    public init(id: PhotoID, format: RawFormat, fileSize: Int64, modified: Date,
+    public init(id: PhotoID, format: PhotoFormat, fileSize: Int64, modified: Date,
                 captureDate: Date? = nil, rating: Int? = nil) {
         self.id = id
         self.format = format

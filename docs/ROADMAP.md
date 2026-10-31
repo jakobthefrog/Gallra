@@ -35,5 +35,11 @@ Rule: one stage per chat session. Finish, tick boxes, commit, then start a fresh
 - [x] Performance pass on thousands of files, large-monitor layout, app icon (scrolling feel and wide-window look still to check by hand)
 - [x] Sparkle updates, release build, GitHub Releases (v1.0 published), first-launch instructions
 
+## Stage 8: More file formats
+- [x] JPG/JPEG, TIFF (8/16 bit) and DNG are listed, previewed and read (`PhotoFormat`)
+- [x] Rating write for files without a rating field: safe ImageIO rewrite with backup + verify (`RatingRewriter`), tested on generated JPG/TIFF 8/16 bit
+- [x] Tested on COPIES of real samples: camera JPG, 8-bit and 16-bit TIFF (ImageIO rewrite), Lightroom DNG (ImageIO cannot write DNG, so the rating goes into the XMP padding: same file size, nothing else moves)
+- [ ] Decide on HEIC and other RAW types (ARW, NEF, RAF, CR2...)
+
 ## Later (do not build yet)
 - Remote companion server + mobile apps

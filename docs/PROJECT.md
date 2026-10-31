@@ -4,7 +4,7 @@ A native Mac app for fast, stable photo culling. Clean, uncluttered, inspired by
 
 ## Target
 - Hardware: M5 MacBook Pro 16" and M5 MacBook Air (Apple Silicon), plus external larger monitors.
-- Files: Canon EOS R5 (`.CR3`), Hasselblad X2D II (`.3FR`). Other RAW formats are out of scope for now but the code must not hard-wire these two.
+- Files: Canon EOS R5 (`.CR3`), Hasselblad X2D II (`.3FR`), plus `.DNG`, `.JPG`/`.JPEG`, `.TIF`/`.TIFF` (8/16 bit). Ratings go into the file: edited in place when the file already has a rating field; otherwise ImageIO copies the file with the rating added (JPEG/TIFF, no pixel re-encoding; DNG uses the blank padding inside its XMP block so the file size stays identical), verified with a backup. Other RAW formats (ARW, NEF, RAF, HEIC...) are out of scope for now but the code must not hard-wire the list.
 - Works fully offline. Checks for updates over the internet when available.
 - Not on the App Store. No Apple Developer account.
 

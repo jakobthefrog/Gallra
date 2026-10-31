@@ -65,7 +65,7 @@ import Foundation
         let rejected = root.appendingPathComponent(FolderBrowser.rejectedFolderName, isDirectory: true)
         try fm.createDirectory(at: deep, withIntermediateDirectories: true)
         try fm.createDirectory(at: rejected, withIntermediateDirectories: true)
-        let files = try fm.contentsOfDirectory(atPath: root.path).filter { RawFormat(fileExtension: ($0 as NSString).pathExtension) != nil }
+        let files = try fm.contentsOfDirectory(atPath: root.path).filter { PhotoFormat(fileExtension: ($0 as NSString).pathExtension) != nil }
         for name in files {
             try fm.copyItem(at: root.appendingPathComponent(name), to: deep.appendingPathComponent(name))
         }

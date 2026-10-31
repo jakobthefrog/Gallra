@@ -75,7 +75,7 @@ public actor Catalog {
         bind(stmt, 1, folder)
         var result: [Photo] = []
         while sqlite3_step(stmt) == SQLITE_ROW {
-            guard let format = RawFormat(rawValue: text(stmt, 3)) else { continue }
+            guard let format = PhotoFormat(rawValue: text(stmt, 3)) else { continue }
             let id = PhotoID(volume: text(stmt, 0), fileNumber: UInt64(sqlite3_column_int64(stmt, 1)),
                              path: text(stmt, 2))
             result.append(Photo(

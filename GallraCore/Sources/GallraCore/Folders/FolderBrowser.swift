@@ -35,7 +35,7 @@ public struct FolderBrowser: FolderBrowsing {
         let volume = (try? folder.resourceValues(forKeys: [.volumeUUIDStringKey]).volumeUUIDString) ?? "unknown"
         var result: [Photo] = []
         for url in items {
-            guard let format = RawFormat(fileExtension: url.pathExtension),
+            guard let format = PhotoFormat(fileExtension: url.pathExtension),
                   let attrs = try? fm.attributesOfItem(atPath: url.path),
                   (attrs[.type] as? FileAttributeType) == .typeRegular else { continue }
             let id = PhotoID(volume: volume,
