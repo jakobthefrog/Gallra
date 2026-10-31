@@ -3,6 +3,36 @@
     <channel>
         <title>Gallra</title>
         <item>
+            <title>Version 1.3</title>
+            <pubDate>Sat, 31 Oct 2026 12:00:00 +0000</pubDate>
+            <sparkle:version>6</sparkle:version>
+            <sparkle:shortVersionString>1.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+<h3>New</h3>
+<ul>
+<li>More file formats: JPG, TIFF (8/16 bit), DNG, HEIC, ARW, NEF, RAF, CR2, ORF and RW2</li>
+<li>New update window with patch notes</li>
+<li>Right-click "Show in Finder" for photos and folders in the grid, viewer, compare and sidebar</li>
+<li>Press I in the viewer to show or hide camera settings (there is also a switch in Settings)</li>
+</ul>
+<h3>Improved</h3>
+<ul>
+<li>Much faster browsing when holding down an arrow key</li>
+<li>Thumbnail info cards show camera details on four rows with a bold file name</li>
+<li>Camera settings stay on screen in the viewer</li>
+<li>Favorites in the sidebar expand on their own</li>
+</ul>
+<h3>Fixed</h3>
+<ul>
+<li>Welcome text now says the reject key is Backspace</li>
+</ul>
+]]></description>
+            <enclosure url="https://github.com/jakobthefrog/Gallra/releases/download/v1.3/Gallra-1.3.zip"
+                       sparkle:edSignature="zuuOWWmk+aPs6DwZtuTU08H8CuQYV9yFQUWWaSoq/EM4yoWGpflDfNn2AoJPMivYOhc3now+H3gBMaZRyAU/CQ==" length="2174196"
+                       type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 1.2.2</title>
             <pubDate>Fri, 30 Oct 2026 21:00:00 +0000</pubDate>
             <sparkle:version>5</sparkle:version>

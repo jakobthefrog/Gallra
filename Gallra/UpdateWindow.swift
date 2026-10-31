@@ -62,13 +62,16 @@ struct UpdateView: View {
                 Text("A new version of Gallra is available!").font(.title3.bold())
                 Text("Gallra \(version) is now available — you have \(current).").foregroundStyle(Theme.textSecondary)
                 if let notes, !notes.isEmpty {
+                    Text("What's new").font(.headline).padding(.top, 6)
                     ScrollView { Text(notes).font(.callout).frame(maxWidth: .infinity, alignment: .leading) }
-                        .padding(10).frame(maxHeight: 90)
+                        .padding(10).frame(maxHeight: .infinity)
                         .background(Theme.canvas, in: RoundedRectangle(cornerRadius: 8))
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.line))
-                        .foregroundStyle(Theme.textSecondary).padding(.top, 4)
+                        .foregroundStyle(Theme.textSecondary)
+                } else {
+                    Spacer(minLength: 12)
                 }
-                Spacer(minLength: 12)
+                Spacer(minLength: 0).frame(height: 4)
                 HStack(spacing: 8) {
                     Spacer()
                     button("Skip This Version") { reply(.skip) }
@@ -78,7 +81,7 @@ struct UpdateView: View {
             }
             .padding(24)
         }
-        .frame(width: 580, height: 300)
+        .frame(width: 580, height: 380)
     }
 
     private var plain: some View {
