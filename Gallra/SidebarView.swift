@@ -114,7 +114,10 @@ private struct FolderRow: View {
                     model.openInNewTab(url)
                 } else { model.open(url) }
             }
-            .contextMenu { Button("Open in New Tab") { model.openInNewTab(url) } }
+            .contextMenu {
+                Button("Open in New Tab") { model.openInNewTab(url) }
+                FinderMenu(folder: url.path)
+            }
             .task {
                 if expanded { loadChildren() }     // was open when the app was last closed
                 await loadCount()

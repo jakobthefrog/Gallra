@@ -35,6 +35,7 @@ struct GridView: View {
                 // Cells handle their own taps first, so this only fires on empty space.
                 .contentShape(Rectangle())
                 .onTapGesture { tab.deselect() }
+                .contextMenu { FinderMenu(folder: tab.folderPath) }
                 .onChange(of: tab.selection) { _, new in
                     if tab.photos.indices.contains(new) { proxy.scrollTo(tab.photos[new].id) }
                 }
@@ -69,6 +70,7 @@ extension GridView {
                     else if NSEvent.modifierFlags.contains(.command) { tab.toggleMark(index) }
                     else { tab.select(index) }
                 }
+                .contextMenu { FinderMenu(photo: photo.id.path, folder: tab.folderPath) }
                 .draggable(tab.dragPayload(for: photo))
                 .dropDestination(for: String.self) { items, _ in
                     guard let section else { return false }
@@ -99,7 +101,10 @@ private struct SceneHeader: View {
         .background(targeted ? Theme.accent.opacity(0.35) : Theme.canvas)
         .contentShape(Rectangle())
         .onTapGesture(perform: toggle)
-        .contextMenu { if let openFolder { Button("Open folder in new tab", action: openFolder) } }
+        .contextMenu {
+            if let openFolder { Button("Open folder in new tab", action: openFolder) }
+            FinderMenu(folder: section.folderPath)
+        }
         .dropDestination(for: String.self) { items, _ in drop(items) } isTargeted: { targeted = $0 }
     }
 }

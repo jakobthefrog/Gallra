@@ -19,6 +19,7 @@ struct ViewerView: View {
             .onContinuousHover { phase in
                 if case .active = phase { showOverlay() }
             }
+            .contextMenu { FinderMenu(photo: tab.currentPhoto?.id.path, folder: tab.folderPath) }
             if tab.showFilmstrip { FilmstripView(tab: tab) }
         }
         .task(id: tab.currentPhoto?.id) {
@@ -153,6 +154,7 @@ struct FilmstripView: View {
                             }
                             .id(photo.id)
                             .onTapGesture { tab.select(index) }
+                            .contextMenu { FinderMenu(photo: photo.id.path, folder: tab.folderPath) }
                     }
                 }.padding(.horizontal, 8)
             }

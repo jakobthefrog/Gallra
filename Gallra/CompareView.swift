@@ -135,6 +135,7 @@ private struct ComparePane: View {
                     onDoubleClick: { state.active = pane; state.toggleActualSize(backingScale: NSScreen.main?.backingScaleFactor ?? 2, at: $0) })
             }
             .overlay(alignment: .topLeading) { header }
+            .contextMenu { FinderMenu(photo: photo?.id.path, folder: tab.folderPath) }
             .overlay(alignment: .top) { if state.active == pane { Theme.accent.frame(height: 2) } }
             .onChange(of: geo.size, initial: true) { _, _ in publishMetrics(geo.size) }
             .onChange(of: image) { _, _ in publishMetrics(geo.size) }
