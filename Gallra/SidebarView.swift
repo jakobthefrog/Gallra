@@ -26,7 +26,7 @@ struct SidebarView: View {
                 if !model.favorites.isEmpty {
                     SectionTitle("Favorites")
                     ForEach(model.favorites, id: \.self) { path in
-                        FolderRow(url: URL(fileURLWithPath: path, isDirectory: true), depth: 0, expandable: false)
+                        FolderRow(url: URL(fileURLWithPath: path, isDirectory: true), depth: 0, expandable: true, scope: "favorites:")
                     }
                 }
                 SectionTitle("Locations")
@@ -69,12 +69,16 @@ private struct FolderRow: View {
     let depth: Int
     let expandable: Bool
     var title: String?
+    /// Which list the row lives in. Favorites and Locations remember open folders separately,
+    /// so opening a folder in one doesn't open it in the other.
+    var scope = ""
     @Environment(AppModel.self) private var model
     @State private var children: [FolderNode] = []
     @State private var count: Int?
     @State private var hovering = false
 
-    private var expanded: Bool { model.expandedFolders.contains(url.path) }
+    private var expandKey: String { scope + url.path }
+    private var expanded: Bool { model.expandedFolders.contains(expandKey) }
     private var isCurrent: Bool { model.selectedTab?.folderPath == FolderScanner.canonicalPath(url) }
 
     var body: some View {
@@ -125,15 +129,15 @@ private struct FolderRow: View {
 
             if expanded {
                 ForEach(children) { child in
-                    FolderRow(url: child.url, depth: depth + 1, expandable: true)
+                    FolderRow(url: child.url, depth: depth + 1, expandable: true, scope: scope)
                 }
             }
         }
     }
 
     private func toggle() {
-        if expanded { model.expandedFolders.remove(url.path); return }
-        model.expandedFolders.insert(url.path)
+        if expanded { model.expandedFolders.remove(expandKey); return }
+        model.expandedFolders.insert(expandKey)
         loadChildren()
     }
 
