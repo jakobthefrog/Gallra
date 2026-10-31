@@ -4,6 +4,7 @@ import AppKit
 /// The Gallra > Settings window: shortcuts to the macOS privacy pages, and browsing defaults.
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
+    @AppStorage("showCameraInfo") private var showCameraInfo = true
     @State private var cacheBytes: Int64?
     @State private var confirmClear = false
 
@@ -29,6 +30,9 @@ struct SettingsView: View {
                     Text("By folder").tag(true)
                 }
                 .pickerStyle(.segmented).fixedSize()
+            }
+            Section("Viewer") {
+                Toggle("Show camera settings (press I in the viewer)", isOn: $showCameraInfo)
             }
             Section("Cache") {
                 Text("Previews and photo details Gallra saved to open folders faster. They are rebuilt as you browse. Your photos, ratings, favorites and hand-made groups are not touched.")

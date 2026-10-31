@@ -6,6 +6,7 @@ struct ViewerView: View {
     let tab: FolderTab
     @Environment(AppModel.self) private var model
     @State private var image: NSImage?
+    @AppStorage("showCameraInfo") private var showCameraInfo = true
     @State private var overlayVisible = true
     @State private var hideTask: Task<Void, Never>?
 
@@ -15,6 +16,11 @@ struct ViewerView: View {
                 Theme.canvas
                 photoArea
                 overlay.opacity(overlayVisible ? 1 : 0).animation(.easeOut(duration: 0.3), value: overlayVisible)
+                // Camera details stay on screen (toggle with I); only the name and counter fade.
+                if showCameraInfo {
+                    cameraPanel.padding(12).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                        .allowsHitTesting(false)
+                }
             }
             .onContinuousHover { phase in
                 if case .active = phase { showOverlay() }
@@ -78,7 +84,6 @@ struct ViewerView: View {
                 .background(.black.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
         }
         .padding(12)
-        .overlay(alignment: .bottomLeading) { cameraPanel.padding(12) }
         .allowsHitTesting(false)
     }
 
