@@ -3,6 +3,34 @@
     <channel>
         <title>Gallra</title>
         <item>
+            <title>Version 1.3.3</title>
+            <pubDate>Mon, 02 Nov 2026 12:00:00 +0000</pubDate>
+            <sparkle:version>9</sparkle:version>
+            <sparkle:shortVersionString>1.3.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+<h3>New</h3>
+<ul>
+<li>Edit menu: Undo, Copy (copies files to the clipboard) and Delete (moves to Rejected)</li>
+</ul>
+<h3>Improved</h3>
+<ul>
+<li>Sidebar hides the arrow on folders without subfolders</li>
+<li>Sidebar refreshes when you switch back to Gallra</li>
+<li>Viewer camera card shows the file name, with orange labels</li>
+<li>Grey hover border on thumbnails</li>
+</ul>
+<h3>Fixed</h3>
+<ul>
+<li>Backspace reject works again, and the grid no longer freezes after a reject</li>
+<li>Selection is cleared after a reject</li>
+</ul>
+]]></description>
+            <enclosure url="https://github.com/jakobthefrog/Gallra/releases/download/v1.3.3/Gallra-1.3.3.zip"
+                       sparkle:edSignature="afaXlay4pvgjXvn8D7sgdVPm7oxrUa0jdbpREi/ikDamyivsw4t/tbVjtKygpsZAWPrvh/qIS7GDW7XPC1fYDQ==" length="2205946"
+                       type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 1.3.2</title>
             <pubDate>Sat, 31 Oct 2026 13:30:00 +0000</pubDate>
             <sparkle:version>8</sparkle:version>
