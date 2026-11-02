@@ -434,6 +434,21 @@ final class FolderTab: Identifiable {
         return currentPhoto
     }
 
+    /// True when Edit > Delete and Copy have a photo to act on.
+    var hasTargetPhoto: Bool { targetPhoto != nil }
+
+    /// Puts the marked photos (or the current one) on the clipboard as files, so they can be pasted
+    /// into Finder, Mail and so on. Only reads: the originals are not touched.
+    func copyToPasteboard() {
+        let list = mode != .compare && !marked.isEmpty ? photos.filter { marked.contains($0.id.path) }
+                                                      : targetPhoto.map { [$0] } ?? []
+        guard !list.isEmpty else { return }
+        let board = NSPasteboard.general
+        board.clearContents()
+        board.writeObjects(list.map { $0.url as NSURL })
+        showNotice("Copied \(list.count) photo\(list.count == 1 ? "" : "s") to the clipboard.")
+    }
+
     /// Photos in the current view that have no stars.
     var unratedInView: [Photo] { photos.filter { ($0.rating ?? 0) == 0 } }
 

@@ -20,6 +20,16 @@ struct GallraApp: App {
                 Button("Close Tab") { if let id = model.selectedTabID { model.closeTab(id) } }.keyboardShortcut("w")
                 Button("Open Folder…") { model.chooseFolder(inNewTab: false) }.keyboardShortcut("o")
             }
+            CommandGroup(replacing: .undoRedo) {
+                Button("Undo") { model.undoLast() }
+                    .keyboardShortcut("z").disabled(model.undoStack.isEmpty)
+            }
+            CommandGroup(replacing: .pasteboard) {
+                Button("Copy") { model.selectedTab?.copyToPasteboard() }
+                    .keyboardShortcut("c").disabled(model.selectedTab?.hasTargetPhoto != true)
+                Button("Delete") { model.selectedTab?.rejectCurrent() }
+                    .keyboardShortcut(.delete, modifiers: .command).disabled(model.selectedTab?.hasTargetPhoto != true)
+            }
             CommandGroup(replacing: .sidebar) {
                 Button(model.sidebarVisible ? "Hide Sidebar" : "Show Sidebar") { model.sidebarVisible.toggle() }
                     .keyboardShortcut("s", modifiers: [.command, .control])
