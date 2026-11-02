@@ -7,6 +7,8 @@ struct ThumbnailView: View {
     let size: Double
     let isSelected: Bool
     var isMarked = false
+    /// Grey border under the mouse (not for the filmstrip, which draws its own).
+    var hoverBorder = true
     @Environment(AppModel.self) private var model
     @State private var image: NSImage?
     @State private var failed = false
@@ -44,6 +46,7 @@ struct ThumbnailView: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 4))
         .overlay { if isSelected || isMarked { RoundedRectangle(cornerRadius: 4).stroke(Theme.accent, lineWidth: isSelected ? 2 : 1).opacity(isSelected ? 1 : 0.7) } }
+        .overlay { if hoverBorder && hovering && !isSelected && !isMarked { RoundedRectangle(cornerRadius: 4).stroke(Theme.textSecondary, lineWidth: 2).opacity(0.5) } }
         .overlay(alignment: .topTrailing) { if isMarked { Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.accent).padding(4) } }
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.12), value: isSelected)

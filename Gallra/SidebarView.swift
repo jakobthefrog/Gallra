@@ -59,6 +59,11 @@ private struct SectionTitle: View {
     }
 }
 
+extension Notification.Name {
+    /// Posted when the app itself creates or fills a folder (rejecting photos), so the sidebar re-reads.
+    static let gallraFoldersChanged = Notification.Name("gallraFoldersChanged")
+}
+
 /// Remembers subfolder lists already read, so expanding again is instant.
 @MainActor private enum SubfolderCache {
     static var values: [String: [FolderNode]] = [:]
@@ -130,6 +135,9 @@ private struct FolderRow: View {
                 loadChildren(show: expanded)       // was open when the app was last closed
                 await loadCount()
             }
+            // Folders can change outside the app (deleted in Finder): look again when the user comes back.
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in refresh() }
+            .onReceive(NotificationCenter.default.publisher(for: .gallraFoldersChanged)) { _ in refresh() }
 
             if expanded {
                 ForEach(children) { child in
@@ -157,6 +165,11 @@ private struct FolderRow: View {
             hasSubfolders = !fresh.isEmpty
             if show { children = fresh }
         }
+    }
+
+    private func refresh() {
+        loadChildren(show: expanded)
+        Task { await loadCount() }
     }
 
     private func loadCount() async {

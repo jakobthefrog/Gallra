@@ -17,11 +17,11 @@ struct GridView: View {
                     LazyVGrid(columns: Array(repeating: GridItem(.fixed(tab.cellSize), spacing: gap), count: cols),
                               spacing: gap) {
                         if tab.sections.isEmpty {
-                            ForEach(0..<tab.photos.count, id: \.self) { cell($0, in: nil) }
+                            ForEach(cells(0..<tab.photos.count), id: \.id) { cell($0.index, in: nil) }
                         } else {
                             ForEach(tab.sections) { section in
                                 Section {
-                                    ForEach(section.range, id: \.self) { cell($0, in: section) }
+                                    ForEach(cells(section.range), id: \.id) { cell($0.index, in: section) }
                                 } header: {
                                     SceneHeader(section: section, openFolder: section.folderPath.map { path in { tab.openFolderInNewTab(path) } }, toggle: { tab.toggleCollapsed(section.id) },
                                                 drop: { items in section.sceneID.map { tab.drop(items, into: $0) } ?? false })
@@ -54,6 +54,12 @@ struct GridView: View {
 }
 
 extension GridView {
+    /// Cells for a range of photos, identified by photo (not by position), so that after a reject
+    /// SwiftUI drops exactly that cell and keeps updating the others.
+    fileprivate func cells(_ range: Range<Int>) -> [(index: Int, id: PhotoID)] {
+        range.clamped(to: 0..<tab.photos.count).map { (index: $0, id: tab.photos[$0].id) }
+    }
+
     @ViewBuilder fileprivate func cell(_ index: Int, in section: FolderTab.SceneSection?) -> some View {
         if tab.photos.indices.contains(index) {
             let photo = tab.photos[index]

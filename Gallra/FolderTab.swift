@@ -448,10 +448,13 @@ final class FolderTab: Identifiable {
         if mode == .viewer && photos.isEmpty { mode = .grid }
         if mode == .compare { closeCompare() }
         marked.subtract(gone)
+        // In the grid, leave nothing selected so the removal is clear; arrow keys carry on from here.
+        if mode == .grid { deselect() }
         var text = "Moved \(batch.files.count) photo\(batch.files.count == 1 ? "" : "s") to Rejected · Undo (Cmd+Z)"
         if !failures.isEmpty { text += " \(failures.count) could not be moved." }
         showNotice(text, undoable: !batch.isEmpty, isError: batch.isEmpty)
         reload()
+        NotificationCenter.default.post(name: .gallraFoldersChanged, object: nil)
     }
 
     // MARK: Navigation

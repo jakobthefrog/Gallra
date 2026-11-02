@@ -142,7 +142,7 @@ struct FilmstripView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 4) {
                     ForEach(Array(tab.photos.enumerated()), id: \.element.id) { index, photo in
-                        ThumbnailView(photo: photo, size: 48, isSelected: false)
+                        ThumbnailView(photo: photo, size: 48, isSelected: false, hoverBorder: false)
                             .opacity(index == tab.selection ? 1 : 0.65)
                             .overlay { if index == tab.selection { RoundedRectangle(cornerRadius: 4).stroke(Theme.accent, lineWidth: 2) } }
                             .overlay(alignment: .bottomLeading) {

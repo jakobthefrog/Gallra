@@ -207,6 +207,13 @@ struct TabContentView: View {
         tab.filter == .all && !tab.cameraFilter.isActive ? "\(tab.photos.count) photos" : "\(tab.photos.count) of \(tab.allPhotos.count) photos"
     }
 
+    /// Backspace or forward delete. Also matches by character, in case the key arrives as a
+    /// control character (0x08, 0x7F) or the forward-delete private-use code instead of `.delete`.
+    private static func isRejectKey(_ press: KeyPress) -> Bool {
+        press.key == .delete || press.key == .deleteForward
+            || press.characters.unicodeScalars.contains { [0x08, 0x7F, 0xF728].contains($0.value) }
+    }
+
     private func handleKey(_ press: KeyPress) -> KeyPress.Result {
         if press.modifiers == .command, press.characters.lowercased() == "z" {
             model.undoLast(); return .handled
@@ -226,6 +233,7 @@ struct TabContentView: View {
         case .escape: if viewer { tab.closeViewer() } else { tab.deselect() }
         case .delete, .deleteForward: tab.rejectCurrent()
         default:
+            if Self.isRejectKey(press) { tab.rejectCurrent(); return .handled }
             switch press.characters.lowercased() {
             case "z" where viewer: tab.viewerZoom.toggleActualSize(backingScale: NSScreen.main?.backingScaleFactor ?? 2)
             case "f" where viewer: tab.showFilmstrip.toggle()
@@ -243,7 +251,7 @@ struct TabContentView: View {
         guard let compare = tab.compare else { return .ignored }
         if press.key == .escape { tab.closeCompare(); return .handled }
         if press.key == .tab { compare.active = 1 - compare.active; return .handled }
-        if press.key == .delete || press.key == .deleteForward { tab.rejectCurrent(); return .handled }
+        if Self.isRejectKey(press) { tab.rejectCurrent(); return .handled }
         switch press.characters.lowercased() {
         case "z": compare.toggleActualSize(backingScale: NSScreen.main?.backingScaleFactor ?? 2)
         case "0", "1", "2", "3": tab.setRating(Int(press.characters)!)
