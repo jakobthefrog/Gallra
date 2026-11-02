@@ -73,12 +73,6 @@ struct ViewerView: View {
 
     private var overlay: some View {
         VStack {
-            HStack {
-                Text((tab.currentPhoto?.fileName ?? "") + starText)
-                    .font(.system(size: 15, weight: .medium)).foregroundStyle(Theme.textPrimary)
-                    .padding(8).background(.black.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
-                Spacer()
-            }
             Spacer()
             Text("\(tab.selection + 1) / \(tab.photos.count)")
                 .font(.system(size: 13).monospacedDigit()).foregroundStyle(Theme.textPrimary)
@@ -89,7 +83,7 @@ struct ViewerView: View {
         .allowsHitTesting(false)
     }
 
-    /// Small semi-transparent card with the shooting details of the current photo.
+    /// Small semi-transparent card with the file name and shooting details of the current photo.
     @ViewBuilder private var cameraPanel: some View {
         let info = tab.cameraInfo
         let rows: [(String, String)] = [
@@ -99,13 +93,14 @@ struct ViewerView: View {
             ("Shutter", info.shutter.flatMap { $0 > 0 ? ($0 >= 1 ? Self.number($0) + " s" : "1/\(Int((1 / $0).rounded())) s") : nil }),
             ("ISO", info.iso.map(String.init)),
         ].compactMap { label, value in value.map { (label, $0) } }
-        if !rows.isEmpty {
+        if let photo = tab.currentPhoto {
             VStack(alignment: .leading, spacing: 3) {
+                Text(photo.fileName + starText).foregroundStyle(.white).padding(.bottom, 2)
                 ForEach(rows, id: \.0) { label, value in
                     HStack(spacing: 10) {
-                        Text(label).foregroundStyle(Theme.textSecondary)
+                        Text(label).foregroundStyle(Theme.accent)
                         Spacer(minLength: 16)
-                        Text(value).foregroundStyle(Theme.textPrimary)
+                        Text(value).foregroundStyle(Theme.textSecondary)
                     }
                 }
             }

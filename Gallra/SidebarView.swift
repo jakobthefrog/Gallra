@@ -76,6 +76,8 @@ private struct FolderRow: View {
     @Environment(AppModel.self) private var model
     @State private var children: [FolderNode] = []
     @State private var count: Int?
+    /// nil until the folder has been read once; the arrow shows meanwhile.
+    @State private var hasSubfolders: Bool?
     @State private var hovering = false
 
     private var expandKey: String { scope + url.path }
@@ -85,7 +87,7 @@ private struct FolderRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
-                if expandable {
+                if expandable && hasSubfolders != false {
                     Button { toggle() } label: {
                         Image(systemName: expanded ? "chevron.down" : "chevron.right")
                             .font(.system(size: 11, weight: .semibold)).frame(width: 26, height: 26)
@@ -124,7 +126,8 @@ private struct FolderRow: View {
                 FinderMenu(folder: url.path)
             }
             .task {
-                if expanded { loadChildren() }     // was open when the app was last closed
+                hasSubfolders = SubfolderCache.values[url.path].map { !$0.isEmpty }
+                loadChildren(show: expanded)       // was open when the app was last closed
                 await loadCount()
             }
 
@@ -139,18 +142,20 @@ private struct FolderRow: View {
     private func toggle() {
         if expanded { model.expandedFolders.remove(expandKey); return }
         model.expandedFolders.insert(expandKey)
-        loadChildren()
+        loadChildren(show: true)
     }
 
-    private func loadChildren() {
+    /// Reads the subfolders (to know whether the arrow is needed) and, with `show`, lists them.
+    private func loadChildren(show: Bool) {
         // Show the last list at once (if we've seen this folder), then refresh it.
-        if let known = SubfolderCache.values[url.path] { children = known }
+        if show, let known = SubfolderCache.values[url.path] { children = known }
         let browser = model.browser
         let folder = url
         Task {
             let fresh = await Task.detached(priority: .userInitiated) { (try? browser.subfolders(of: folder)) ?? [] }.value
             SubfolderCache.values[folder.path] = fresh
-            children = fresh
+            hasSubfolders = !fresh.isEmpty
+            if show { children = fresh }
         }
     }
 
