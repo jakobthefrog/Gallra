@@ -78,7 +78,7 @@ final class UpdateWindowDriver: NSObject, SPUUserDriver, NSWindowDelegate {
     func showUpdateReleaseNotesFailedToDownloadWithError(_ error: any Error) {}
 
     func showUpdateNotFoundWithError(_ error: any Error, acknowledgement: @escaping () -> Void) {
-        message("You're up to date!", "Gallra is the newest version.", acknowledgement)
+        message("You're up to date!", "You have the latest version of Gallra.", acknowledgement)
     }
 
     func showUpdaterError(_ error: any Error, acknowledgement: @escaping () -> Void) {
