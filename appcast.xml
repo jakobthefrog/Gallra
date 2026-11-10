@@ -164,5 +164,21 @@
                        sparkle:edSignature="qf7r5CR1La6r0+GjuvaI3zOWv1EVFa6V7P2NnQ9NiOD7r8qQwAejb2tit8SNvmAq7WdAW9JVa6v2TyVRCEXdDA==" length="2216170"
                        type="application/octet-stream"/>
         </item>
+        <item>
+            <title>Version 1.4.1</title>
+            <pubDate>Tue, 10 Nov 2026 13:00:00 +0000</pubDate>
+            <sparkle:version>11</sparkle:version>
+            <sparkle:shortVersionString>1.4.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+<h3>Fixed</h3>
+<ul>
+<li>Folders in the sidebar are now spaced evenly, with or without an expand arrow</li>
+</ul>
+]]></description>
+            <enclosure url="https://github.com/jakobthefrog/Gallra/releases/download/v1.4.1/Gallra-1.4.1.zip"
+                       sparkle:edSignature="qfx2rN5suh5zUinuP4sS3qelt/jDoJRuxv10Abu7aRmTd53kB+iwtjOjY9XDOCn0AqSQ9n0GTP/A22ti40HpBw==" length="2216186"
+                       type="application/octet-stream"/>
+        </item>
     </channel>
 </rss>
