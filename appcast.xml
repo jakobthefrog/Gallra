@@ -142,5 +142,27 @@
                        sparkle:edSignature="XSRiCfsj8pHUOA48bfAKREiGYMUsPyUvPBo6oflzRrmGXzi6I0Fjxgl14GiA9ykMe7MnQc3AzAr8gpiOzIddBg==" length="1611148"
                        type="application/octet-stream"/>
         </item>
+        <item>
+            <title>Version 1.4.0</title>
+            <pubDate>Tue, 10 Nov 2026 12:00:00 +0000</pubDate>
+            <sparkle:version>10</sparkle:version>
+            <sparkle:shortVersionString>1.4.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+<h3>New</h3>
+<ul>
+<li>Shift+click selects every photo between the last one clicked and the one you shift-click</li>
+<li>Cmd+A (Edit &gt; Select All) selects all photos in the folder</li>
+<li>Drag photos from the grid to the Desktop or any Finder folder to copy them; your originals are never moved</li>
+</ul>
+<h3>Improved</h3>
+<ul>
+<li>Delete and Backspace move all selected photos to Rejected, and Undo brings them all back</li>
+</ul>
+]]></description>
+            <enclosure url="https://github.com/jakobthefrog/Gallra/releases/download/v1.4.0/Gallra-1.4.0.zip"
+                       sparkle:edSignature="qf7r5CR1La6r0+GjuvaI3zOWv1EVFa6V7P2NnQ9NiOD7r8qQwAejb2tit8SNvmAq7WdAW9JVa6v2TyVRCEXdDA==" length="2216170"
+                       type="application/octet-stream"/>
+        </item>
     </channel>
 </rss>
