@@ -98,7 +98,7 @@ private struct FolderRow: View {
                             .font(.system(size: 11, weight: .semibold)).frame(width: 26, height: 26)
                             .contentShape(Rectangle())
                     }.buttonStyle(.plain)
-                } else { Spacer().frame(width: 26) }
+                } else { Color.clear.frame(width: 26, height: 26) }   // same height as rows with an arrow
                 Image(systemName: "folder").foregroundStyle(Theme.accent)
                 Text(title ?? url.lastPathComponent).lineLimit(1).foregroundStyle(Theme.textPrimary)
                 Spacer(minLength: 4)
