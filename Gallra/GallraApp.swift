@@ -27,6 +27,8 @@ struct GallraApp: App {
             CommandGroup(replacing: .pasteboard) {
                 Button("Copy") { model.selectedTab?.copyToPasteboard() }
                     .keyboardShortcut("c").disabled(model.selectedTab?.hasTargetPhoto != true)
+                Button("Select All") { model.selectedTab?.selectAll() }
+                    .keyboardShortcut("a").disabled(model.selectedTab?.mode != .grid)
                 Button("Delete") { model.selectedTab?.rejectCurrent() }
                     .keyboardShortcut(.delete, modifiers: .command).disabled(model.selectedTab?.hasTargetPhoto != true)
             }

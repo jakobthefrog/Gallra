@@ -73,6 +73,7 @@ extension GridView {
                 // click until the double-click window passed. The click count tells us which it is.
                 .onTapGesture {
                     if NSApp.currentEvent?.clickCount ?? 1 >= 2 { tab.select(index); tab.openViewer() }
+                    else if NSEvent.modifierFlags.contains(.shift) { tab.selectRange(to: index) }
                     else if NSEvent.modifierFlags.contains(.command) { tab.toggleMark(index) }
                     else { tab.select(index) }
                 }

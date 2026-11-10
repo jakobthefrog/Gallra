@@ -421,7 +421,12 @@ final class FolderTab: Identifiable {
     }
 
     /// Moves the current photo to the Rejected folder (undo with Cmd+Z).
+    /// In the grid, acts on all marked photos when there are any.
     func rejectCurrent() {
+        if mode == .grid, !marked.isEmpty {
+            reject(photos.filter { marked.contains($0.id.path) })
+            return
+        }
         guard let photo = targetPhoto else { return }
         reject([photo])
     }
@@ -561,6 +566,23 @@ final class FolderTab: Identifiable {
         let path = photos[index].id.path
         if marked.contains(path) { marked.remove(path) } else { marked.insert(path) }
         selection = index
+    }
+
+    /// Shift-click: mark every photo from the current one to `index`, both ends included.
+    func selectRange(to index: Int) {
+        guard photos.indices.contains(index) else { return }
+        let anchor = currentPhoto != nil ? selection : index
+        let range = min(anchor, index)...max(anchor, index)
+        isDeselected = false
+        marked = Set(range.map { photos[$0].id.path })
+        selection = index
+    }
+
+    /// Cmd+A: mark every photo in the current view.
+    func selectAll() {
+        guard !photos.isEmpty else { return }
+        if currentPhoto == nil { isDeselected = false }
+        marked = Set(photos.map(\.id.path))
     }
 
     /// Shift+arrow: move the selection and mark both the old and the new photo.
