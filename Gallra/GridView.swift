@@ -71,14 +71,15 @@ extension GridView {
                 .id(photo.id)
                 // One tap handler, not a separate double-tap one: SwiftUI would hold back the single
                 // click until the double-click window passed. The click count tells us which it is.
-                .onTapGesture {
-                    if NSApp.currentEvent?.clickCount ?? 1 >= 2 { tab.select(index); tab.openViewer() }
-                    else if NSEvent.modifierFlags.contains(.shift) { tab.selectRange(to: index) }
-                    else if NSEvent.modifierFlags.contains(.command) { tab.toggleMark(index) }
-                    else { tab.select(index) }
+                .overlay {
+                    FileDragOverlay(urls: { tab.dragURLs(for: photo) }) { clicks, flags in
+                        if clicks >= 2 { tab.select(index); tab.openViewer() }
+                        else if flags.contains(.shift) { tab.selectRange(to: index) }
+                        else if flags.contains(.command) { tab.toggleMark(index) }
+                        else { tab.select(index) }
+                    }
                 }
                 .contextMenu { FinderMenu(photo: photo.id.path, folder: tab.folderPath) }
-                .draggable(tab.dragPayload(for: photo))
                 .dropDestination(for: String.self) { items, _ in
                     guard let section else { return false }
                     return tab.drop(items, into: section.id)

@@ -214,6 +214,11 @@ final class FolderTab: Identifiable {
         return paths.joined(separator: "\n")
     }
 
+    /// Files a drag of `photo` carries out of the app: all marked photos (in grid order) if it is one, else itself.
+    func dragURLs(for photo: Photo) -> [URL] {
+        marked.contains(photo.id.path) ? photos.filter { marked.contains($0.id.path) }.map(\.url) : [photo.url]
+    }
+
     /// Drop handler: moves the dragged photos into the scene `sectionID`, or into a new group (nil).
     @discardableResult
     func drop(_ items: [String], into sectionID: String?) -> Bool {
