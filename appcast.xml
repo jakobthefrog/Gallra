@@ -196,5 +196,21 @@
                        sparkle:edSignature="oxbrAYOb2VG9ha0Ru1jo6T6eAE3gXJbpT1ZnJXuFFFm9uNJsh4Ve2iAAN26mnn7nqcHCHwHGv3vo99S01BCjDQ==" length="2216185"
                        type="application/octet-stream"/>
         </item>
+        <item>
+            <title>Version 1.4.3</title>
+            <pubDate>Fri, 13 Nov 2026 14:00:00 +0000</pubDate>
+            <sparkle:version>13</sparkle:version>
+            <sparkle:shortVersionString>1.4.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+<h3>Improved</h3>
+<ul>
+<li>Apple Photos libraries no longer show up in the folder list</li>
+</ul>
+]]></description>
+            <enclosure url="https://github.com/jakobthefrog/Gallra/releases/download/v1.4.3/Gallra-1.4.3.zip"
+                       sparkle:edSignature="UOxlBd/jkN+U4rD4quwH6AIRBpZBzUQFx6UCuYWz+m7p7A65bGZdNyZkdeooprKXSZCJN70ukGlf5CQF5qJiDA==" length="2216412"
+                       type="application/octet-stream"/>
+        </item>
     </channel>
 </rss>
