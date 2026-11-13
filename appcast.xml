@@ -212,5 +212,21 @@
                        sparkle:edSignature="UOxlBd/jkN+U4rD4quwH6AIRBpZBzUQFx6UCuYWz+m7p7A65bGZdNyZkdeooprKXSZCJN70ukGlf5CQF5qJiDA==" length="2216412"
                        type="application/octet-stream"/>
         </item>
+        <item>
+            <title>Version 1.4.4</title>
+            <pubDate>Fri, 13 Nov 2026 15:00:00 +0000</pubDate>
+            <sparkle:version>14</sparkle:version>
+            <sparkle:shortVersionString>1.4.4</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+<h3>Improved</h3>
+<ul>
+<li>Capture One catalogs and other library files that look like a single file in Finder no longer show up in the folder list</li>
+</ul>
+]]></description>
+            <enclosure url="https://github.com/jakobthefrog/Gallra/releases/download/v1.4.4/Gallra-1.4.4.zip"
+                       sparkle:edSignature="McxtRCs/6XYXodBS+isoQ0+rqJd4gVsh6lgseFr5WPfUa1mnDLUUZ6YdLHswFigFgJjOJ97rf4/wXPU0SenWCQ==" length="2216903"
+                       type="application/octet-stream"/>
+        </item>
     </channel>
 </rss>
