@@ -17,14 +17,24 @@ public struct FolderBrowser: FolderBrowsing {
 
     public init() {}
 
+    /// Folder extensions that are catalog/library packages even where the system does not flag them as packages.
+    private static let libraryExtensions: Set<String> = ["photoslibrary", "cocatalog", "aplibrary", "lrdata"]
+
+    /// True for a macOS package (Finder shows it as one file) or a known library/catalog folder.
+    static func isLibraryPackage(_ url: URL) -> Bool {
+        if libraryExtensions.contains(url.pathExtension.lowercased()) { return true }
+        return (try? url.resourceValues(forKeys: [.isPackageKey]).isPackage) == true
+    }
+
     public func subfolders(of folder: URL) throws -> [FolderNode] {
         let items = try FileManager.default.contentsOfDirectory(
             at: folder, includingPropertiesForKeys: [.isDirectoryKey],
             options: [.skipsHiddenFiles])
         return items
             .filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true }
-            // Apple Photos libraries are system packages Gallra cannot read; never list them.
-            .filter { $0.pathExtension.lowercased() != "photoslibrary" }
+            // Library/catalog packages (Apple Photos, Capture One, Lightroom previews...) look like files
+            // in Finder and hold no browsable photos, so they are never listed as folders.
+            .filter { !FolderBrowser.isLibraryPackage($0) }
             .map { FolderNode(path: $0.path) }
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }

@@ -17,7 +17,7 @@ import Foundation
 
     @Test func photosLibraryIsNotListed() throws {
         let dir = try Scratch.folder(cr3: 0, threeFR: 0)
-        for name in ["Photos Library.photoslibrary", "Sub"] {
+        for name in ["Photos Library.photoslibrary", "Capture One Catalog.cocatalog", "Sub"] {
             try FileManager.default.createDirectory(at: dir.appendingPathComponent(name), withIntermediateDirectories: false)
         }
         #expect(try FolderBrowser().subfolders(of: dir).map(\.name) == ["Sub"])
