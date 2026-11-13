@@ -95,7 +95,7 @@ public actor PreviewService {
     // MARK: Internals
 
     private func cacheKey(_ photo: Photo, _ size: PreviewSize) -> String {
-        let raw = "v2|\(photo.id.rawValue)|\(photo.modified.timeIntervalSince1970)|\(photo.fileSize)|\(size.rawValue)"
+        let raw = "v3|\(photo.id.rawValue)|\(photo.modified.timeIntervalSince1970)|\(photo.fileSize)|\(size.rawValue)"
         return SHA256.hash(data: Data(raw.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 
@@ -113,8 +113,12 @@ public actor PreviewService {
         // Both sizes go through the thumbnail call because it applies the photo's orientation
         // (portraits upright). For the full size the limit is the image's own long edge.
         let limit = maxPixel ?? PreviewService.longEdge(of: source)
+        // RAW files: use the camera's embedded preview (fast). Ordinary image files (JPEG, TIFF, HEIC)
+        // are the real picture, and any small thumbnail inside them must be ignored or the viewer
+        // shows a blurry, stretched-up version.
+        let isRAW = PhotoFormat(fileExtension: url.pathExtension).map { ![.jpg, .tiff, .heic].contains($0) } ?? true
         let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
-            kCGImageSourceCreateThumbnailFromImageIfAbsent: true,
+            (isRAW ? kCGImageSourceCreateThumbnailFromImageIfAbsent : kCGImageSourceCreateThumbnailFromImageAlways): true,
             kCGImageSourceCreateThumbnailWithTransform: true,
             kCGImageSourceThumbnailMaxPixelSize: limit,
         ] as CFDictionary)

@@ -28,6 +28,18 @@ import ImageIO
         }
     }
 
+    /// JPEGs often hold a tiny embedded thumbnail; the full preview must be the real image, not that.
+    @Test func jpegFullPreviewIsRealSizeNotEmbeddedThumbnail() async throws {
+        let names = try FileManager.default.contentsOfDirectory(atPath: Scratch.samples.path)
+        let name = try #require(names.sorted().first { $0.lowercased().hasSuffix(".jpg") })
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("gallra-jpg-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try FileManager.default.copyItem(at: Scratch.samples.appendingPathComponent(name), to: dir.appendingPathComponent(name))
+        let photo = try #require(try FolderBrowser().photos(in: dir).first)
+        let full = try await service().preview(for: photo, size: .full)
+        #expect((pixelWidth(full) ?? 0) >= 2000, "full JPEG preview is a small embedded thumbnail")
+    }
+
     @Test func fullPreviewHasSameOrientationAsThumbnail() async throws {
         let dir = try Scratch.folder(cr3: 12, threeFR: 3)
         let service = service()
