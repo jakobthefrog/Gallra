@@ -23,6 +23,8 @@ public struct FolderBrowser: FolderBrowsing {
             options: [.skipsHiddenFiles])
         return items
             .filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true }
+            // Apple Photos libraries are system packages Gallra cannot read; never list them.
+            .filter { $0.pathExtension.lowercased() != "photoslibrary" }
             .map { FolderNode(path: $0.path) }
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }

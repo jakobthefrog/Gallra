@@ -15,6 +15,14 @@ import Foundation
         #expect(try browser.subfolders(of: dir).map(\.name) == ["Sub"])
     }
 
+    @Test func photosLibraryIsNotListed() throws {
+        let dir = try Scratch.folder(cr3: 0, threeFR: 0)
+        for name in ["Photos Library.photoslibrary", "Sub"] {
+            try FileManager.default.createDirectory(at: dir.appendingPathComponent(name), withIntermediateDirectories: false)
+        }
+        #expect(try FolderBrowser().subfolders(of: dir).map(\.name) == ["Sub"])
+    }
+
     @Test func photoIDsAreStableAndUnique() throws {
         let dir = try Scratch.folder()
         let first = try FolderBrowser().photos(in: dir)
