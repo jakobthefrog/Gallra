@@ -93,13 +93,16 @@ struct ViewerView: View {
                 .allowsHitTesting(false)   // display only; the layer below takes the mouse
                 .frame(width: geo.size.width, height: geo.size.height)
                 .clipped()
-                // Double-click zooms to 100% where you clicked (and back); drag, scroll and pinch pan and zoom.
+                // Click zooms to 100% where you clicked (and back), double-click returns to browse; drag, scroll and pinch pan and zoom.
                 .overlay {
                     PaneInteraction(
                         onPan: { movement, _ in zoom.pan(pane: 0, movement: movement, independent: false) },
                         onZoom: { factor, point in zoom.zoom(pane: 0, factor: factor, at: point) },
                         onClick: {},
-                        onDoubleClick: { zoom.toggleActualSize(backingScale: backingScale, at: $0) })
+                        onDoubleClick: { _ in },
+                        // One click zooms to 100% where you clicked (and back, like Z); double-click goes back to browsing.
+                        onTap: { zoom.toggleActualSize(backingScale: backingScale, at: $0) },
+                        onDoubleTap: { tab.closeViewer() })
                 }
                 // When zoomed in, re-analyse just the visible area at full detail (after a short pause).
                 .task(id: DetailKey(photo: tab.currentPhoto?.id, wanted: peakingOn && zoomedIn && !covered,

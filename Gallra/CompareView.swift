@@ -167,10 +167,16 @@ struct PaneInteraction: NSViewRepresentable {
     var onZoom: (Double, CGPoint) -> Void
     var onClick: () -> Void
     var onDoubleClick: (CGPoint) -> Void
+    /// Optional click handling on mouse-up (a plain click with no drag): `onTap` gets the point
+    /// relative to the pane centre, `onDoubleTap` fires on the second click. When `onTap` is set,
+    /// `onClick` and `onDoubleClick` are not used.
+    var onTap: ((CGPoint) -> Void)?
+    var onDoubleTap: (() -> Void)?
 
     func makeNSView(context: Context) -> InteractionView { InteractionView() }
     func updateNSView(_ view: InteractionView, context: Context) {
         view.onPan = onPan; view.onZoom = onZoom; view.onClick = onClick; view.onDoubleClick = onDoubleClick
+        view.onTap = onTap; view.onDoubleTap = onDoubleTap
     }
 
     final class InteractionView: NSView {
@@ -178,6 +184,9 @@ struct PaneInteraction: NSViewRepresentable {
         var onZoom: (Double, CGPoint) -> Void = { _, _ in }
         var onClick: () -> Void = {}
         var onDoubleClick: (CGPoint) -> Void = { _ in }
+        var onTap: ((CGPoint) -> Void)?
+        var onDoubleTap: (() -> Void)?
+        private var dragged = false
         override var isFlipped: Bool { true }
 
         private func fromCentre(_ event: NSEvent) -> CGPoint {
@@ -186,9 +195,16 @@ struct PaneInteraction: NSViewRepresentable {
         }
 
         override func mouseDown(with event: NSEvent) {
+            dragged = false
+            if onTap != nil { return }   // taps are decided on mouse-up, so a drag-to-pan is not a click
             if event.clickCount == 2 { onDoubleClick(fromCentre(event)) } else { onClick() }
         }
+        override func mouseUp(with event: NSEvent) {
+            guard let onTap, !dragged else { return }
+            if event.clickCount >= 2 { onDoubleTap?() } else { onTap(fromCentre(event)) }
+        }
         override func mouseDragged(with event: NSEvent) {
+            dragged = true
             onPan(CGSize(width: event.deltaX, height: event.deltaY), event.modifierFlags.contains(.option))
         }
         override func scrollWheel(with event: NSEvent) {
