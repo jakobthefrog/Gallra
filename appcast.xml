@@ -255,5 +255,26 @@
                        sparkle:edSignature="lSaPe3Sxnmmec1sLZNctBIFqGNNwMyWXA0L4Ih6wpLnNIFT1revEj25FrntaLevh4k7zCQ6+zyIny4w+B0T+AA==" length="2222166"
                        type="application/octet-stream"/>
         </item>
+        <item>
+            <title>Version 1.5.0</title>
+            <pubDate>Wed, 18 Nov 2026 21:00:00 +0000</pubDate>
+            <sparkle:version>16</sparkle:version>
+            <sparkle:shortVersionString>1.5.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+<h3>New</h3>
+<ul>
+<li>Focus peaking: press P in the viewer to highlight in-focus edges in red, crisp even when zoomed to 100%</li>
+<li>Clipping warnings: press H to mark blown highlights in green and S to mark crushed shadows in blue. For RAW files they read the real sensor data, not the JPEG preview</li>
+</ul>
+<h3>Improved</h3>
+<ul>
+<li>In the viewer, a single click zooms to 100% where you click (and back, like Z), and a double click returns to browsing</li>
+</ul>
+]]></description>
+            <enclosure url="https://github.com/jakobthefrog/Gallra/releases/download/v1.5.0/Gallra-1.5.0.zip"
+                       sparkle:edSignature="ODV4DnVt2JlRxVAvdf2TBIC01A7jdraIcXfv3tV1y14CAH3XxdM/sicDd15F7gLJc3C4xZ54ejUctGGlcnIWCg==" length="2279522"
+                       type="application/octet-stream"/>
+        </item>
     </channel>
 </rss>
