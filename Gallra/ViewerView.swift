@@ -9,6 +9,10 @@ struct ViewerView: View {
     @AppStorage("showCameraInfo") private var showCameraInfo = true
     @AppStorage("focusPeaking") private var peakingOn = false
     @State private var peaking: NSImage?
+    @AppStorage("clipShadows") private var shadowsOn = false
+    @AppStorage("clipHighlights") private var highlightsOn = false
+    @State private var shadowsOverlay: NSImage?
+    @State private var highlightsOverlay: NSImage?
     /// Crisp overlay for just the visible area, used when zoomed in.
     @State private var detail: (image: NSImage, region: CGRect)?
     @State private var overlayVisible = true
@@ -25,13 +29,30 @@ struct ViewerView: View {
                     cameraPanel.padding(12).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                         .allowsHitTesting(false)
                 }
-                peakingButton.padding(12).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                HStack(spacing: 6) {
+                    chip("Peaking", key: "P", dot: Theme.reject, on: peakingOn, help: "Highlight in-focus edges (P)") { peakingOn.toggle() }
+                    chip("Highlights", key: "H", dot: Color(hex: 0x30D158), on: highlightsOn, help: "Mark blown highlights in green (H)") { highlightsOn.toggle() }
+                    chip("Shadows", key: "S", dot: Color(hex: 0x0A84FF), on: shadowsOn, help: "Mark crushed blacks in blue (S)") { shadowsOn.toggle() }
+                }
+                .padding(12).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             }
             .onContinuousHover { phase in
                 if case .active = phase { showOverlay() }
             }
             .contextMenu { FinderMenu(photo: tab.currentPhoto?.id.path, folder: tab.folderPath) }
             if tab.showFilmstrip { FilmstripView(tab: tab) }
+        }
+        .task(id: PeakingKey(photo: tab.currentPhoto?.id, on: shadowsOn)) {
+            shadowsOverlay = nil
+            guard shadowsOn, let photo = tab.currentPhoto else { return }
+            shadowsOverlay = await model.images.clippingOverlay(for: photo, kind: .shadows)   // quick, from the preview
+            if let exact = await model.images.clippingOverlay(for: photo, kind: .shadows, fromRAW: true) { shadowsOverlay = exact }
+        }
+        .task(id: PeakingKey(photo: tab.currentPhoto?.id, on: highlightsOn)) {
+            highlightsOverlay = nil
+            guard highlightsOn, let photo = tab.currentPhoto else { return }
+            highlightsOverlay = await model.images.clippingOverlay(for: photo, kind: .highlights)   // quick, from the preview
+            if let exact = await model.images.clippingOverlay(for: photo, kind: .highlights, fromRAW: true) { highlightsOverlay = exact }
         }
         .task(id: PeakingKey(photo: tab.currentPhoto?.id, on: peakingOn)) {
             // Focus peaking: clear the old overlay at once, then compute the new one in the background.
@@ -61,12 +82,12 @@ struct ViewerView: View {
                 ZStack {
                     if let layout = zoom.layout(0) {
                         Image(nsImage: image).resizable()
-                            .overlay { peakingLayer(visible: visible, zoomedIn: zoomedIn) }
+                            .overlay { markLayers(visible: visible, zoomedIn: zoomedIn) }
                             .frame(width: layout.size.width, height: layout.size.height)
                             .offset(layout.shift)
                     } else {
                         Image(nsImage: image).resizable().scaledToFit()
-                            .overlay { peakingLayer(visible: visible, zoomedIn: zoomedIn) }
+                            .overlay { markLayers(visible: visible, zoomedIn: zoomedIn) }
                     }
                 }
                 .allowsHitTesting(false)   // display only; the layer below takes the mouse
@@ -95,6 +116,15 @@ struct ViewerView: View {
             }
         } else {
             ProgressView().controlSize(.small)
+        }
+    }
+
+    /// Everything painted on top of the photo: clipping warnings, then focus peaking.
+    @ViewBuilder private func markLayers(visible: CGRect?, zoomedIn: Bool) -> some View {
+        ZStack {
+            if shadowsOn, let shadowsOverlay { Image(nsImage: shadowsOverlay).resizable().interpolation(.low).allowsHitTesting(false) }
+            if highlightsOn, let highlightsOverlay { Image(nsImage: highlightsOverlay).resizable().interpolation(.low).allowsHitTesting(false) }
+            peakingLayer(visible: visible, zoomedIn: zoomedIn)
         }
     }
 
@@ -130,13 +160,13 @@ struct ViewerView: View {
 
     private struct DetailKey: Hashable { let photo: Photo.ID?; let wanted: Bool; let area: CGRect? }
 
-    /// Small on/off chip for focus peaking (also the P key).
-    private var peakingButton: some View {
-        Button { peakingOn.toggle() } label: {
+    /// Small on/off chip with a colour dot and its key, for the viewer's overlays.
+    private func chip(_ title: String, key: String, dot: Color, on: Bool, help: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             HStack(spacing: 6) {
-                Circle().fill(peakingOn ? Theme.reject : Theme.textDisabled).frame(width: 8, height: 8)
-                Text("Peaking").foregroundStyle(peakingOn ? Theme.textPrimary : Theme.textSecondary)
-                Text("P").foregroundStyle(Theme.textSecondary)
+                Circle().fill(on ? dot : Theme.textDisabled).frame(width: 8, height: 8)
+                Text(title).foregroundStyle(on ? Theme.textPrimary : Theme.textSecondary)
+                Text(key).foregroundStyle(Theme.textSecondary)
                     .padding(.horizontal, 4)
                     .overlay(RoundedRectangle(cornerRadius: 3).stroke(Theme.line))
             }
@@ -145,7 +175,7 @@ struct ViewerView: View {
             .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 6))
         }
         .buttonStyle(.plain)
-        .help("Highlight in-focus edges (P)")
+        .help(help)
     }
 
     private struct PeakingKey: Hashable { let photo: Photo.ID?; let on: Bool }

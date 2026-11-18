@@ -50,5 +50,18 @@ Rule: one stage per chat session. Finish, tick boxes, commit, then start a fresh
 - [x] Not needed (owner decision): compare-view overlay, sensitivity slider and colour picker. Peaking stays viewer-only, middle sensitivity, red
 - [x] Tried on real photos and approved by owner (preview-based; RAW-accurate peaking at 100% is a possible later add-on)
 
+## Stage 10: Clipping warnings (mockup approved)
+Two separate viewer toggles, each remembered: **S** Shadows (crushed blacks, blue fill) and **H** Highlights (blown whites, green fill). Based on the embedded JPEG preview, so a guide, not a RAW verdict.
+- [x] Engine: `ClippingWarning` in `GallraCore/Focus` (all channels >= 250 = blown, all <= 5 = crushed, lone pixels ignored) + tests on generated images
+- [x] Viewer: Shadows and Highlights chips + `S` / `H` keys, overlays on the single-photo view, can be on together with peaking
+- [x] Try on real photos
+
+## Stage 11: Clipping from the RAW data
+Shadows/Highlights read the real sensor data (Apple's RAW decoder, tone curve off) instead of the JPEG preview; JPEG preview stays as instant first result and fallback. Peaking stays on the preview.
+- [x] Engine: RAW reader in `ClippingWarning` (reduced size ~2048 px; RAW formats only, `PhotoFormat.isRaw`), tested on CR3/3FR/RAF/DNG samples
+- [x] Calibrate thresholds against sample photos (owner judged: 250 / 5 look right)
+- [x] Viewer: RAW overlay computed in background, cached, replaces the JPEG one when ready
+- [x] Tried on real photos and approved by owner
+
 ## Later (do not build yet)
 - Remote companion server + mobile apps

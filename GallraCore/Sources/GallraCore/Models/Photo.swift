@@ -34,6 +34,9 @@ public enum PhotoFormat: String, Codable, Sendable, CaseIterable {
         }
     }
 
+    /// True for camera RAW formats (sensor data), false for ready-made images (JPEG, TIFF, HEIC).
+    public var isRaw: Bool { self != .jpg && self != .tiff && self != .heic }
+
     /// Formats whose rating writing has been tried on real files. Others open and preview but are never written to.
     var ratingWriteTested: Bool {
         switch self {

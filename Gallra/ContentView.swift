@@ -48,6 +48,8 @@ struct TabContentView: View {
     @AppStorage("showCardDetails") private var showCardDetails = false
     @AppStorage("showCameraInfo") private var showCameraInfo = true
     @AppStorage("focusPeaking") private var peakingOn = false
+    @AppStorage("clipShadows") private var shadowsOn = false
+    @AppStorage("clipHighlights") private var highlightsOn = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -240,6 +242,8 @@ struct TabContentView: View {
             case "f" where viewer: tab.showFilmstrip.toggle()
             case "i" where viewer: showCameraInfo.toggle()
             case "p" where viewer: peakingOn.toggle()
+            case "s" where viewer: shadowsOn.toggle()
+            case "h" where viewer: highlightsOn.toggle()
             case "0", "1", "2", "3": tab.setRating(Int(press.characters)!)
             case "c": tab.openCompare()
             case "g" where tab.groupingAllowed: tab.grouping.toggle()

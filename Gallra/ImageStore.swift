@@ -21,6 +21,7 @@ final class ImageStore {
         self.previews = previews
         cache.totalCostLimit = 1_500 * 1024 * 1024
         peakingCache.totalCostLimit = 300 * 1024 * 1024
+        clippingCache.totalCostLimit = 300 * 1024 * 1024
     }
 
     private func key(_ photo: Photo, _ size: PreviewSize) -> String { "\(size.rawValue)|\(photo.id.rawValue)" }
@@ -83,6 +84,30 @@ final class ImageStore {
         }.value
         guard let overlay, !Task.isCancelled else { return nil }
         peakingCache.setObject(overlay, forKey: k, cost: Int(overlay.size.width * overlay.size.height * 4))
+        return overlay
+    }
+
+    private let clippingCache = NSCache<NSString, NSImage>()
+
+    /// Clipping-warning overlay (blown highlights or crushed shadows) for `photo`, computed in the
+    /// background and cached. With `fromRAW` it reads the real sensor data (slower, about 0.1 to
+    /// 0.4 s) and returns nil if the file is not a RAW Apple can decode; otherwise it reads the
+    /// embedded JPEG preview (fast). Nil too if the caller was cancelled.
+    func clippingOverlay(for photo: Photo, kind: ClippingKind, fromRAW: Bool = false) async -> NSImage? {
+        let k = "\(photo.id.rawValue)|\(kind.rawValue)|\(fromRAW ? "raw" : "jpeg")" as NSString
+        if let hit = clippingCache.object(forKey: k) { return hit }
+        let data = fromRAW ? nil : try? await previews.preview(for: photo, size: .full)
+        if !fromRAW && data == nil { return nil }
+        if Task.isCancelled { return nil }
+        let url = photo.url
+        let overlay = await Task.detached(priority: .userInitiated) { () -> NSImage? in
+            let mask = fromRAW ? try? ClippingWarning.mask(fromRAW: url, kind: kind)
+                               : try? ClippingWarning.mask(fromJPEG: data!, kind: kind)
+            guard let mask, let cg = mask.overlay(color: kind.color, thickness: 0) else { return nil }
+            return NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height))
+        }.value
+        guard let overlay, !Task.isCancelled else { return nil }
+        clippingCache.setObject(overlay, forKey: k, cost: Int(overlay.size.width * overlay.size.height * 4))
         return overlay
     }
 
