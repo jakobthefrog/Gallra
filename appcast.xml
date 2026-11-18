@@ -276,5 +276,25 @@
                        sparkle:edSignature="ODV4DnVt2JlRxVAvdf2TBIC01A7jdraIcXfv3tV1y14CAH3XxdM/sicDd15F7gLJc3C4xZ54ejUctGGlcnIWCg==" length="2279522"
                        type="application/octet-stream"/>
         </item>
+        <item>
+            <title>Version 1.5.1</title>
+            <pubDate>Wed, 18 Nov 2026 21:30:00 +0000</pubDate>
+            <sparkle:version>17</sparkle:version>
+            <sparkle:shortVersionString>1.5.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+<h3>Fixed</h3>
+<ul>
+<li>With many tabs open, the tab bar no longer disappears into the arrow menu at the top right. The tabs scroll instead, and closing tabs works as expected</li>
+</ul>
+<h3>Improved</h3>
+<ul>
+<li>The tab bar scrolls to the selected tab</li>
+</ul>
+]]></description>
+            <enclosure url="https://github.com/jakobthefrog/Gallra/releases/download/v1.5.1/Gallra-1.5.1.zip"
+                       sparkle:edSignature="oS2oL9rx0URERdbUMx+bw3EJ8S3qEODG6Kj95jIRMYDfEyrTHUCrTH/IjV0F3Pd4HD57Or5UBIiL4uJ62zp7Cw==" length="2287932"
+                       type="application/octet-stream"/>
+        </item>
     </channel>
 </rss>
