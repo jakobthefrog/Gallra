@@ -89,7 +89,7 @@ struct ViewerView: View {
         if let photo = tab.currentPhoto {
             let rows = ShotDetails.rows(photo, info).compactMap { row in row.value.map { (row.label, $0) } }
             VStack(alignment: .leading, spacing: 3) {
-                Text(photo.fileName + starText).foregroundStyle(.white).padding(.bottom, 2)
+                (Text(photo.fileName).foregroundStyle(.white) + Text(starText).foregroundStyle(Theme.star)).padding(.bottom, 2)
                 ForEach(rows, id: \.0) { label, value in
                     HStack(spacing: 10) {
                         Text(label).foregroundStyle(Theme.accent)
