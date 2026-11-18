@@ -21,6 +21,7 @@ struct ContentView: View {
                         TabContentView(tab: tab).id(tab.id)
                     }
                 }
+                .onChange(of: geo.size.width, initial: true) { _, width in model.windowWidth = width }
             }
         }
         .background(Theme.window)
@@ -28,7 +29,7 @@ struct ContentView: View {
         .tint(Theme.accent)
         .frame(minWidth: 700, minHeight: 450)
         .toolbar {
-            TabsToolbarItem()
+            TabsToolbarItem(idealWidth: max(300, min(model.tabsNaturalWidth, model.windowWidth - 130)))
         }
         .toolbarBackground(Theme.canvas, for: .windowToolbar)
         .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
@@ -269,6 +270,7 @@ struct TabContentView: View {
 
 /// The tab bar as a window-toolbar item, without the rounded pill newer macOS draws around items.
 private struct TabsToolbarItem: ToolbarContent {
+    let idealWidth: CGFloat
     var body: some ToolbarContent {
         if #available(macOS 26, *) {
             ToolbarItem(placement: .navigation) { tabs }.sharedBackgroundVisibility(.hidden)
@@ -277,7 +279,9 @@ private struct TabsToolbarItem: ToolbarContent {
         }
     }
 
-    private var tabs: some View { TabBarView().frame(minWidth: 300, maxWidth: .infinity) }
+    // The toolbar sizes the bar to its ideal width. Capping that at the window width stops it from hiding the bar
+    // in its overflow menu when many tabs don't fit; the bar then scrolls its own tabs instead.
+    private var tabs: some View { TabBarView().frame(minWidth: 300, idealWidth: idealWidth, maxWidth: .infinity) }
 }
 
 /// Thin invisible strip on the sidebar edge; drag to resize.

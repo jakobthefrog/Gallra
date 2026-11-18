@@ -13,7 +13,12 @@ struct TabBarView: View {
                     plus
                 }
                 HStack(spacing: 0) {
-                    ScrollView(.horizontal, showsIndicators: false) { tabs(capped: true) }
+                    ScrollViewReader { proxy in
+                        ScrollView(.horizontal, showsIndicators: false) { tabs(capped: true) }
+                            .onChange(of: model.selectedTabID, initial: true) { _, id in
+                                if let id { withAnimation { proxy.scrollTo(id) } }
+                            }
+                    }
                     plus
                 }
             }
@@ -21,12 +26,19 @@ struct TabBarView: View {
         }
         .frame(height: 30)
         .background(Theme.canvas)
+        // Invisible copy of the tabs at full width, only to measure how wide they would like to be.
+        .background(alignment: .leading) {
+            HStack(spacing: 0) { tabs(capped: false); plus }
+                .fixedSize().hidden().allowsHitTesting(false)
+                .background(GeometryReader { Color.clear.preference(key: NaturalWidthKey.self, value: $0.size.width) })
+        }
+        .onPreferenceChange(NaturalWidthKey.self) { model.tabsNaturalWidth = $0 }
     }
 
     /// Each tab exactly as wide as its full name while there's room; capped once the tabs scroll.
     private func tabs(capped: Bool) -> some View {
         HStack(spacing: 0) {
-            ForEach(model.tabs) { tab in TabItem(tab: tab, capped: capped) }
+            ForEach(model.tabs) { tab in TabItem(tab: tab, capped: capped).id(tab.id) }
         }
     }
 
@@ -35,6 +47,11 @@ struct TabBarView: View {
             .buttonStyle(.plain).foregroundStyle(Theme.textSecondary)
             .accessibilityLabel("New tab")
     }
+}
+
+private struct NaturalWidthKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }
 
 private struct TabItem: View {

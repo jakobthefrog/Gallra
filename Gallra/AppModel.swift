@@ -23,6 +23,9 @@ final class AppModel {
     var undoStack: [UndoStep] = []
 
     var tabs: [FolderTab] = [] { didSet { saveSession() } }
+    /// Window width and the width all tabs would need end to end; the toolbar uses them to size the tab bar.
+    var windowWidth: CGFloat = 1000
+    var tabsNaturalWidth: CGFloat = 300
     var selectedTabID: UUID? { didSet { saveSession() } }
     /// Paths of the sidebar folders that are expanded (remembered between launches).
     var expandedFolders: Set<String> = Set(UserDefaults.standard.stringArray(forKey: "expandedFolders") ?? []) {
