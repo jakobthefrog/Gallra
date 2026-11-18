@@ -228,5 +228,32 @@
                        sparkle:edSignature="McxtRCs/6XYXodBS+isoQ0+rqJd4gVsh6lgseFr5WPfUa1mnDLUUZ6YdLHswFigFgJjOJ97rf4/wXPU0SenWCQ==" length="2216903"
                        type="application/octet-stream"/>
         </item>
+        <item>
+            <title>Version 1.4.5</title>
+            <pubDate>Wed, 18 Nov 2026 12:00:00 +0000</pubDate>
+            <sparkle:version>15</sparkle:version>
+            <sparkle:shortVersionString>1.4.5</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+<h3>New</h3>
+<ul>
+<li>Option+Cmd+Left/Right moves between open tabs</li>
+<li>Cmd+click or right-click &gt; Open in New Tab on a sidebar folder always opens a new tab</li>
+</ul>
+<h3>Improved</h3>
+<ul>
+<li>Camera info now shows date, time, shutter speed, aperture, ISO and focal length (the lens is gone) in the viewer, under thumbnails and in the status line</li>
+<li>Stars in the viewer card are yellow like everywhere else</li>
+</ul>
+<h3>Fixed</h3>
+<ul>
+<li>Star ratings now work on DNG files from DJI drones and on DNGs re-saved by Lightroom</li>
+<li>Double-clicking a sidebar folder no longer just reloads it</li>
+</ul>
+]]></description>
+            <enclosure url="https://github.com/jakobthefrog/Gallra/releases/download/v1.4.5/Gallra-1.4.5.zip"
+                       sparkle:edSignature="lSaPe3Sxnmmec1sLZNctBIFqGNNwMyWXA0L4Ih6wpLnNIFT1revEj25FrntaLevh4k7zCQ6+zyIny4w+B0T+AA==" length="2222166"
+                       type="application/octet-stream"/>
+        </item>
     </channel>
 </rss>
