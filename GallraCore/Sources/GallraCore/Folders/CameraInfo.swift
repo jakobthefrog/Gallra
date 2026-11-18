@@ -15,16 +15,15 @@ public struct CameraInfo: Sendable, Equatable {
         self.iso = iso; self.focalLength = focalLength
     }
 
-    /// "RF 85mm · 85 mm · f/2.8 · 1/200 · ISO 400", leaving out whatever the file doesn't have.
+    /// "1/200 · f/2.8 · ISO 400 · 85 mm", leaving out whatever the file doesn't have (no lens).
     public var summary: String {
         var parts: [String] = []
-        if let lens { parts.append(lens) }
-        if let focalLength { parts.append("\(Int(focalLength.rounded())) mm") }
-        if let aperture { parts.append("f/" + Self.number(aperture)) }
         if let shutter, shutter > 0 {
             parts.append(shutter >= 1 ? Self.number(shutter) + " s" : "1/\(Int((1 / shutter).rounded()))")
         }
+        if let aperture { parts.append("f/" + Self.number(aperture)) }
         if let iso { parts.append("ISO \(iso)") }
+        if let focalLength { parts.append("\(Int(focalLength.rounded())) mm") }
         return parts.joined(separator: " · ")
     }
 

@@ -193,7 +193,7 @@ struct TabContentView: View {
             }
             if let (done, total) = tab.groupProgress { Text("Grouping \(done)/\(total)…") }
             if let photo = tab.currentPhoto {
-                Text(([photo.fileName, tab.cameraInfo.summary].filter { !$0.isEmpty }).joined(separator: " · "))
+                Text(([photo.fileName, ShotDetails.summary(photo, tab.cameraInfo)].filter { !$0.isEmpty }).joined(separator: " · "))
                     .lineLimit(1).truncationMode(.tail)
             }
         }

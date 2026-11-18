@@ -86,14 +86,8 @@ struct ViewerView: View {
     /// Small semi-transparent card with the file name and shooting details of the current photo.
     @ViewBuilder private var cameraPanel: some View {
         let info = tab.cameraInfo
-        let rows: [(String, String)] = [
-            ("Lens", info.lens),
-            ("Focal length", info.focalLength.map { "\(Int($0.rounded())) mm" }),
-            ("Aperture", info.aperture.map { "f/" + Self.number($0) }),
-            ("Shutter", info.shutter.flatMap { $0 > 0 ? ($0 >= 1 ? Self.number($0) + " s" : "1/\(Int((1 / $0).rounded())) s") : nil }),
-            ("ISO", info.iso.map(String.init)),
-        ].compactMap { label, value in value.map { (label, $0) } }
         if let photo = tab.currentPhoto {
+            let rows = ShotDetails.rows(photo, info).compactMap { row in row.value.map { (row.label, $0) } }
             VStack(alignment: .leading, spacing: 3) {
                 Text(photo.fileName + starText).foregroundStyle(.white).padding(.bottom, 2)
                 ForEach(rows, id: \.0) { label, value in
@@ -105,7 +99,7 @@ struct ViewerView: View {
                 }
             }
             .font(.system(size: 11).monospacedDigit())
-            .fixedSize()   // as wide as the longest line (usually the lens name)
+            .fixedSize()   // as wide as the longest line
             .padding(.horizontal, 10).padding(.vertical, 8)
             .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 8))
         }

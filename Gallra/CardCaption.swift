@@ -6,7 +6,7 @@ import GallraCore
     static var values: [String: CameraInfo] = [:]
 }
 
-/// Small card under a thumbnail: file name, then shutter, ISO, aperture and focal length, one per row.
+/// Small card under a thumbnail: file name, then date, time, shutter, aperture, ISO and focal length, one per row.
 struct CardCaption: View {
     let photo: Photo
     let width: Double
@@ -32,17 +32,10 @@ struct CardCaption: View {
         }
     }
 
-    /// ["1/200", "ISO 400", "f/2.8", "85 mm"], with a dash for anything missing or not read yet.
+    /// ["2026-11-13", "14:32", "1/200", "f/2.8", "ISO 400", "85 mm"], with a dash for anything missing or not read yet.
     private var details: [String] {
-        guard let info else { return ["–", "–", "–", "–"] }
-        let shutter = info.shutter.map { $0 >= 1 ? "\(Self.number($0)) s" : "1/\(Int((1 / max($0, 0.000001)).rounded()))" }
-        return [shutter ?? "–",
-                info.iso.map { "ISO \($0)" } ?? "–",
-                info.aperture.map { "f/" + Self.number($0) } ?? "–",
-                info.focalLength.map { "\(Int($0.rounded())) mm" } ?? "–"]
-    }
-
-    private static func number(_ value: Double) -> String {
-        value == value.rounded() ? String(Int(value)) : String(format: "%.1f", value)
+        let info = info ?? CameraInfo()
+        return [ShotDetails.date(photo), ShotDetails.time(photo), ShotDetails.shutter(info),
+                ShotDetails.aperture(info), ShotDetails.iso(info), ShotDetails.focalLength(info)].map { $0 ?? "–" }
     }
 }
