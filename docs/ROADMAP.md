@@ -43,5 +43,12 @@ Rule: one stage per chat session. Finish, tick boxes, commit, then start a fresh
 - [x] Fujifilm RAF rating write tested on copies of real X-T5 files (rating lives in XMP inside the embedded JPEG; Gallra reads it from there)
 - [ ] Rating write is blocked for ARW, NEF, CR2, ORF, RW2, HEIC until tested on real files (`PhotoFormat.ratingWriteTested`)
 
+## Stage 9: Focus peaking (mockup approved)
+- [x] Engine: `FocusPeaking` in `GallraCore/Focus` (blur, Laplacian edges, threshold, overlay image) + tests on sharp/flat/blurry images
+- [ ] Viewer: toggle button + `F` key, overlay on the single-photo view
+- [ ] Overlay stays aligned and crisp when zooming and panning
+- [ ] Compare view shows the overlay on both panes; sensitivity slider + colour picker, saved between launches
+- [ ] Try on real photos (preview-based; RAW-accurate peaking at 100% is a possible later add-on)
+
 ## Later (do not build yet)
 - Remote companion server + mobile apps
