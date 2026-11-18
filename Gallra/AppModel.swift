@@ -112,10 +112,11 @@ final class AppModel {
         selectedTabID = tab.id
     }
 
-    /// Opens `folder` in a new tab, or switches to the tab that already shows it.
-    func openInNewTab(_ folder: URL) {
+    /// Opens `folder` in a new tab. With `reuse` (the default) it switches to the tab that already shows
+    /// it instead; the sidebar passes false so right-click and Cmd+click always make a new tab.
+    func openInNewTab(_ folder: URL, reuse: Bool = true) {
         let path = FolderScanner.canonicalPath(folder)
-        if let existing = tabs.first(where: { $0.folderPath == path }) {
+        if reuse, let existing = tabs.first(where: { $0.folderPath == path }) {
             selectedTabID = existing.id
             return
         }
@@ -123,6 +124,12 @@ final class AppModel {
         tabs.append(tab)
         selectedTabID = tab.id
         tab.open(folder)
+    }
+
+    /// Option+Cmd+Left/Right: moves to the tab `offset` places away, wrapping around at the ends.
+    func selectTab(offset: Int) {
+        guard tabs.count > 1, let current = tabs.firstIndex(where: { $0.id == selectedTabID }) else { return }
+        selectedTabID = tabs[(current + offset + tabs.count) % tabs.count].id
     }
 
     /// Shows `folder` in the current tab (an empty tab if none).

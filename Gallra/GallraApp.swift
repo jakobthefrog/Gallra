@@ -20,6 +20,12 @@ struct GallraApp: App {
                 Button("Close Tab") { if let id = model.selectedTabID { model.closeTab(id) } }.keyboardShortcut("w")
                 Button("Open Folder…") { model.chooseFolder(inNewTab: false) }.keyboardShortcut("o")
             }
+            CommandGroup(after: .windowArrangement) {
+                Button("Previous Tab") { model.selectTab(offset: -1) }
+                    .keyboardShortcut(.leftArrow, modifiers: [.command, .option]).disabled(model.tabs.count < 2)
+                Button("Next Tab") { model.selectTab(offset: 1) }
+                    .keyboardShortcut(.rightArrow, modifiers: [.command, .option]).disabled(model.tabs.count < 2)
+            }
             CommandGroup(replacing: .undoRedo) {
                 Button("Undo") { model.undoLast() }
                     .keyboardShortcut("z").disabled(model.undoStack.isEmpty)

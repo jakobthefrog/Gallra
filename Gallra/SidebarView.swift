@@ -119,15 +119,13 @@ private struct FolderRow: View {
             .background((isCurrent || hovering) ? Theme.hover : .clear, in: RoundedRectangle(cornerRadius: 6))
             .contentShape(Rectangle())
             .onHover { hovering = $0 }
-            // One handler for click and double-click: a separate double-tap gesture makes SwiftUI
-            // hold back every click (including the arrow) until the double-click window passes.
+            // Click opens the folder here; Cmd+click opens it in a new tab.
             .onTapGesture {
-                if NSApp.currentEvent?.clickCount ?? 1 >= 2 || NSEvent.modifierFlags.contains(.command) {
-                    model.openInNewTab(url)
-                } else { model.open(url) }
+                if NSEvent.modifierFlags.contains(.command) { model.openInNewTab(url, reuse: false) }
+                else { model.open(url) }
             }
             .contextMenu {
-                Button("Open in New Tab") { model.openInNewTab(url) }
+                Button("Open in New Tab") { model.openInNewTab(url, reuse: false) }
                 FinderMenu(folder: url.path)
             }
             .task {
