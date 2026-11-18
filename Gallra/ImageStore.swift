@@ -20,6 +20,7 @@ final class ImageStore {
     init(previews: PreviewService) {
         self.previews = previews
         cache.totalCostLimit = 1_500 * 1024 * 1024
+        peakingCache.totalCostLimit = 300 * 1024 * 1024
     }
 
     private func key(_ photo: Photo, _ size: PreviewSize) -> String { "\(size.rawValue)|\(photo.id.rawValue)" }
@@ -64,6 +65,25 @@ final class ImageStore {
         }
         if !Task.isCancelled { inFlight[k] = nil }
         return image
+    }
+
+    private let peakingCache = NSCache<NSString, NSImage>()
+
+    /// Focus-peaking overlay for `photo` (transparent image with sharp edges painted), computed
+    /// in the background from the full preview and cached. Nil if the preview can't be read
+    /// or the caller was cancelled.
+    func peakingOverlay(for photo: Photo, color: PeakingColor = .red, sensitivity: Double = 0.5) async -> NSImage? {
+        let k = "\(photo.id.rawValue)|\(color.rawValue)|\(sensitivity)" as NSString
+        if let hit = peakingCache.object(forKey: k) { return hit }
+        guard let data = try? await previews.preview(for: photo, size: .full), !Task.isCancelled else { return nil }
+        let overlay = await Task.detached(priority: .userInitiated) { () -> NSImage? in
+            guard let mask = try? FocusPeaking.mask(fromJPEG: data, sensitivity: sensitivity),
+                  let cg = mask.overlay(color: color) else { return nil }
+            return NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height))
+        }.value
+        guard let overlay, !Task.isCancelled else { return nil }
+        peakingCache.setObject(overlay, forKey: k, cost: Int(overlay.size.width * overlay.size.height * 4))
+        return overlay
     }
 
     /// One caller gave up; if nobody is left waiting, cancel the load.

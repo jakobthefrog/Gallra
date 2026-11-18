@@ -47,6 +47,7 @@ struct TabContentView: View {
     @State private var showCameraFilters = false
     @AppStorage("showCardDetails") private var showCardDetails = false
     @AppStorage("showCameraInfo") private var showCameraInfo = true
+    @AppStorage("focusPeaking") private var peakingOn = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -238,6 +239,7 @@ struct TabContentView: View {
             case "z" where viewer: tab.viewerZoom.toggleActualSize(backingScale: NSScreen.main?.backingScaleFactor ?? 2)
             case "f" where viewer: tab.showFilmstrip.toggle()
             case "i" where viewer: showCameraInfo.toggle()
+            case "p" where viewer: peakingOn.toggle()
             case "0", "1", "2", "3": tab.setRating(Int(press.characters)!)
             case "c": tab.openCompare()
             case "g" where tab.groupingAllowed: tab.grouping.toggle()

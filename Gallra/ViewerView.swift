@@ -7,6 +7,8 @@ struct ViewerView: View {
     @Environment(AppModel.self) private var model
     @State private var image: NSImage?
     @AppStorage("showCameraInfo") private var showCameraInfo = true
+    @AppStorage("focusPeaking") private var peakingOn = false
+    @State private var peaking: NSImage?
     @State private var overlayVisible = true
     @State private var hideTask: Task<Void, Never>?
 
@@ -21,12 +23,19 @@ struct ViewerView: View {
                     cameraPanel.padding(12).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                         .allowsHitTesting(false)
                 }
+                peakingButton.padding(12).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             }
             .onContinuousHover { phase in
                 if case .active = phase { showOverlay() }
             }
             .contextMenu { FinderMenu(photo: tab.currentPhoto?.id.path, folder: tab.folderPath) }
             if tab.showFilmstrip { FilmstripView(tab: tab) }
+        }
+        .task(id: PeakingKey(photo: tab.currentPhoto?.id, on: peakingOn)) {
+            // Focus peaking: clear the old overlay at once, then compute the new one in the background.
+            peaking = nil
+            guard peakingOn, let photo = tab.currentPhoto else { return }
+            peaking = await model.images.peakingOverlay(for: photo)
         }
         .task(id: tab.currentPhoto?.id) {
             guard let photo = tab.currentPhoto else { return }
@@ -46,10 +55,12 @@ struct ViewerView: View {
                 ZStack {
                     if let layout = zoom.layout(0) {
                         Image(nsImage: image).resizable()
+                            .overlay { peakingLayer }
                             .frame(width: layout.size.width, height: layout.size.height)
                             .offset(layout.shift)
                     } else {
                         Image(nsImage: image).resizable().scaledToFit()
+                            .overlay { peakingLayer }
                     }
                 }
                 .allowsHitTesting(false)   // display only; the layer below takes the mouse
@@ -70,6 +81,33 @@ struct ViewerView: View {
             ProgressView().controlSize(.small)
         }
     }
+
+    /// Focus-peaking colour layer; sits exactly on the photo so it follows zoom and pan.
+    @ViewBuilder private var peakingLayer: some View {
+        if peakingOn, let peaking {
+            Image(nsImage: peaking).resizable().interpolation(.low).allowsHitTesting(false)
+        }
+    }
+
+    /// Small on/off chip for focus peaking (also the P key).
+    private var peakingButton: some View {
+        Button { peakingOn.toggle() } label: {
+            HStack(spacing: 6) {
+                Circle().fill(peakingOn ? Theme.reject : Theme.textDisabled).frame(width: 8, height: 8)
+                Text("Peaking").foregroundStyle(peakingOn ? Theme.textPrimary : Theme.textSecondary)
+                Text("P").foregroundStyle(Theme.textSecondary)
+                    .padding(.horizontal, 4)
+                    .overlay(RoundedRectangle(cornerRadius: 3).stroke(Theme.line))
+            }
+            .font(.system(size: 11))
+            .padding(.horizontal, 8).padding(.vertical, 4)
+            .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 6))
+        }
+        .buttonStyle(.plain)
+        .help("Highlight in-focus edges (P)")
+    }
+
+    private struct PeakingKey: Hashable { let photo: Photo.ID?; let on: Bool }
 
     private var overlay: some View {
         VStack {

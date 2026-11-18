@@ -1,6 +1,7 @@
 import Foundation
 import ImageIO
 import CoreGraphics
+import Accelerate
 
 /// Colour used to paint in-focus edges.
 public enum PeakingColor: String, Codable, CaseIterable, Sendable {
@@ -89,38 +90,36 @@ public enum FocusPeaking {
         precondition(gray.count == width * height, "gray buffer size must match width * height")
         guard width >= 5, height >= 5 else { return FocusMask(width: width, height: height, pixels: [UInt8](repeating: 0, count: gray.count)) }
         let s = min(max(sensitivity, 0), 1)
-        let threshold = 7 - 5 * s         // edge strength needed, on a 0...255 scale
-        let blurred = boxBlur(gray, width, height)
-        var out = [UInt8](repeating: 0, count: gray.count)
-        blurred.withUnsafeBufferPointer { b in
+        let threshold = Float(7 - 5 * s)     // edge strength needed, on a 0...255 scale
+        let n = width * height
+
+        // One 5x5 kernel = light 3x3 blur (ignores grain) followed by a Laplacian (edge strength / 4).
+        let box = [Float](repeating: 1.0 / 9, count: 9)
+        let lap: [Float] = [0, -1, 0, -1, 4, -1, 0, -1, 0].map { $0 / 4 }
+        var kernel = [Float](repeating: 0, count: 25)
+        for ly in 0..<3 { for lx in 0..<3 { for by in 0..<3 { for bx in 0..<3 {
+            kernel[(ly + by) * 5 + lx + bx] += lap[ly * 3 + lx] * box[by * 3 + bx]
+        } } } }
+
+        // Accelerate does the heavy lifting (fast even in unoptimised debug builds).
+        var input = [Float](repeating: 0, count: n)
+        var edges = [Float](repeating: 0, count: n)
+        vDSP_vfltu8(gray, 1, &input, 1, vDSP_Length(n))
+        input.withUnsafeMutableBytes { i in
+            edges.withUnsafeMutableBytes { e in
+                var src = vImage_Buffer(data: i.baseAddress, height: vImagePixelCount(height), width: vImagePixelCount(width), rowBytes: width * 4)
+                var dst = vImage_Buffer(data: e.baseAddress, height: vImagePixelCount(height), width: vImagePixelCount(width), rowBytes: width * 4)
+                vImageConvolve_PlanarF(&src, &dst, nil, 0, 0, kernel, 5, 5, 0, vImage_Flags(kvImageEdgeExtend))
+            }
+        }
+        vDSP_vabs(edges, 1, &edges, 1, vDSP_Length(n))
+
+        var out = [UInt8](repeating: 0, count: n)
+        edges.withUnsafeBufferPointer { e in
             out.withUnsafeMutableBufferPointer { o in
-                for y in 1..<(height - 1) {
-                    let row = y * width
-                    for x in 1..<(width - 1) {
-                        let i = row + x
-                        let lap = 4 * Int(b[i]) - Int(b[i - 1]) - Int(b[i + 1]) - Int(b[i - width]) - Int(b[i + width])
-                        if Double(abs(lap)) / 4 > threshold { o[i] = 255 }
-                    }
-                }
+                for i in 0..<n where e[i] > threshold { o[i] = 255 }
             }
         }
         return FocusMask(width: width, height: height, pixels: out)
-    }
-
-    private static func boxBlur(_ src: [UInt8], _ w: Int, _ h: Int) -> [UInt8] {
-        var dst = src
-        src.withUnsafeBufferPointer { s in
-            dst.withUnsafeMutableBufferPointer { d in
-                for y in 1..<(h - 1) {
-                    for x in 1..<(w - 1) {
-                        let i = y * w + x
-                        var sum = 0
-                        for dy in -1...1 { for dx in -1...1 { sum += Int(s[i + dy * w + dx]) } }
-                        d[i] = UInt8(sum / 9)
-                    }
-                }
-            }
-        }
-        return dst
     }
 }
