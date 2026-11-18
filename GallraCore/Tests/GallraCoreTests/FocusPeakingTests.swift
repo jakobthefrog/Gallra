@@ -66,3 +66,27 @@ struct FocusPeakingTests {
         #expect(m.overlay(color: .red) != nil)
     }
 }
+
+@Suite("Focus peaking region")
+struct FocusPeakingRegionTests {
+    @Test func regionCoversOnlyTheRequestedArea() throws {
+        let w = 400, h = 200
+        var gray = [UInt8](repeating: 128, count: w * h)
+        for y in 0..<h { for x in 0..<(w / 2) { gray[y * w + x] = ((x / 8 + y / 8) % 2 == 0) ? 20 : 235 } }   // sharp left half
+        let provider = CGDataProvider(data: Data(gray) as CFData)!
+        let image = CGImage(width: w, height: h, bitsPerComponent: 8, bitsPerPixel: 8, bytesPerRow: w,
+                            space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGBitmapInfo(rawValue: 0),
+                            provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)!
+        let out = NSMutableData()
+        let dest = CGImageDestinationCreateWithData(out, UTType.jpeg.identifier as CFString, 1, nil)!
+        CGImageDestinationAddImage(dest, image, [kCGImageDestinationLossyCompressionQuality: 0.95] as CFDictionary)
+        #expect(CGImageDestinationFinalize(dest))
+
+        let left = try FocusPeaking.mask(fromJPEG: out as Data, region: CGRect(x: 0, y: 0, width: 0.4, height: 1))
+        let right = try FocusPeaking.mask(fromJPEG: out as Data, region: CGRect(x: 0.6, y: 0, width: 0.4, height: 1))
+        #expect(abs(left.region.width - 0.4) < 0.01)
+        #expect(left.width == 160 && left.height == 200)
+        #expect(left.coverage > 0.02)
+        #expect(right.coverage < 0.005)
+    }
+}

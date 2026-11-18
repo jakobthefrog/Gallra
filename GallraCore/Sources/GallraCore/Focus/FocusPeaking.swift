@@ -23,6 +23,12 @@ public struct FocusMask: Sendable {
     public let width: Int
     public let height: Int
     public let pixels: [UInt8]
+    /// Part of the photo this mask covers, as fractions (0...1) of the photo. The whole photo by default.
+    public let region: CGRect
+
+    public init(width: Int, height: Int, pixels: [UInt8], region: CGRect = CGRect(x: 0, y: 0, width: 1, height: 1)) {
+        self.width = width; self.height = height; self.pixels = pixels; self.region = region
+    }
 
     /// Share of pixels marked sharp, 0...1.
     public var coverage: Double {
@@ -71,17 +77,40 @@ public enum FocusPeaking {
             throw PreviewError.cannotRead
         }
         let w = image.width, h = image.height
+        guard let gray = grayPixels(image, width: w, height: h) else { throw PreviewError.cannotRead }
+        return mask(gray: gray, width: w, height: h, sensitivity: sensitivity)
+    }
+
+    /// Like `mask(fromJPEG:)`, but analyses only `region` (fractions of the photo) at full detail.
+    /// Use it when zoomed in, so the edges stay crisp. `maxPixel` caps the long edge of the analysed
+    /// area (it is scaled down if larger). The result's `region` is the area actually covered.
+    public static func mask(fromJPEG data: Data, sensitivity: Double = 0.5, region: CGRect, maxPixel: Int = 4608) throws -> FocusMask {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let full = CGImageSourceCreateImageAtIndex(source, 0, nil) else { throw PreviewError.cannotRead }
+        let W = Double(full.width), H = Double(full.height)
+        let wanted = CGRect(x: region.minX * W, y: region.minY * H, width: region.width * W, height: region.height * H)
+        let rect = wanted.integral.intersection(CGRect(x: 0, y: 0, width: W, height: H))
+        guard rect.width >= 5, rect.height >= 5, let cropped = full.cropping(to: rect) else { throw PreviewError.cannotRead }
+        let scale = min(1, Double(maxPixel) / max(rect.width, rect.height))
+        let w = max(5, Int(rect.width * scale)), h = max(5, Int(rect.height * scale))
+        guard let gray = grayPixels(cropped, width: w, height: h) else { throw PreviewError.cannotRead }
+        let found = mask(gray: gray, width: w, height: h, sensitivity: sensitivity)
+        let covered = CGRect(x: rect.minX / W, y: rect.minY / H, width: rect.width / W, height: rect.height / H)
+        return FocusMask(width: w, height: h, pixels: found.pixels, region: covered)
+    }
+
+    private static func grayPixels(_ image: CGImage, width w: Int, height h: Int) -> [UInt8]? {
         var gray = [UInt8](repeating: 0, count: w * h)
         let drawn = gray.withUnsafeMutableBytes { buffer -> Bool in
             guard let ctx = CGContext(
                 data: buffer.baseAddress, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w,
                 space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue)
             else { return false }
+            ctx.interpolationQuality = .medium
             ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
             return true
         }
-        guard drawn else { throw PreviewError.cannotRead }
-        return mask(gray: gray, width: w, height: h, sensitivity: sensitivity)
+        return drawn ? gray : nil
     }
 
     /// Finds sharp edges in an 8-bit grayscale image (row by row, `width * height` bytes).

@@ -86,6 +86,19 @@ final class ImageStore {
         return overlay
     }
 
+    /// Full-detail peaking overlay for just `region` (fractions of the photo), for when you are
+    /// zoomed in. Returns the overlay and the area it really covers. Not cached.
+    func peakingDetail(for photo: Photo, region: CGRect, color: PeakingColor = .red, sensitivity: Double = 0.5) async -> (image: NSImage, region: CGRect)? {
+        guard let data = try? await previews.preview(for: photo, size: .full), !Task.isCancelled else { return nil }
+        let result = await Task.detached(priority: .userInitiated) { () -> (NSImage, CGRect)? in
+            guard let mask = try? FocusPeaking.mask(fromJPEG: data, sensitivity: sensitivity, region: region),
+                  let cg = mask.overlay(color: color) else { return nil }
+            return (NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height)), mask.region)
+        }.value
+        guard let result, !Task.isCancelled else { return nil }
+        return (result.0, result.1)
+    }
+
     /// One caller gave up; if nobody is left waiting, cancel the load.
     private func stopWaiting(_ k: String) {
         guard var entry = inFlight[k] else { return }

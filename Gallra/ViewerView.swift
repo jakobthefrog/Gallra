@@ -9,6 +9,8 @@ struct ViewerView: View {
     @AppStorage("showCameraInfo") private var showCameraInfo = true
     @AppStorage("focusPeaking") private var peakingOn = false
     @State private var peaking: NSImage?
+    /// Crisp overlay for just the visible area, used when zoomed in.
+    @State private var detail: (image: NSImage, region: CGRect)?
     @State private var overlayVisible = true
     @State private var hideTask: Task<Void, Never>?
 
@@ -34,6 +36,7 @@ struct ViewerView: View {
         .task(id: PeakingKey(photo: tab.currentPhoto?.id, on: peakingOn)) {
             // Focus peaking: clear the old overlay at once, then compute the new one in the background.
             peaking = nil
+            detail = nil
             guard peakingOn, let photo = tab.currentPhoto else { return }
             peaking = await model.images.peakingOverlay(for: photo)
         }
@@ -52,15 +55,18 @@ struct ViewerView: View {
             let zoom = tab.viewerZoom
             let backingScale = NSScreen.main?.backingScaleFactor ?? 2
             GeometryReader { geo in
+                let visible = Self.visibleRect(zoom, pane: geo.size)
+                let zoomedIn = (zoom.layout(0)?.size.width ?? 0) * backingScale > 2400
+                let covered = visible.map { v in detail?.region.contains(v) ?? false } ?? false
                 ZStack {
                     if let layout = zoom.layout(0) {
                         Image(nsImage: image).resizable()
-                            .overlay { peakingLayer }
+                            .overlay { peakingLayer(visible: visible, zoomedIn: zoomedIn) }
                             .frame(width: layout.size.width, height: layout.size.height)
                             .offset(layout.shift)
                     } else {
                         Image(nsImage: image).resizable().scaledToFit()
-                            .overlay { peakingLayer }
+                            .overlay { peakingLayer(visible: visible, zoomedIn: zoomedIn) }
                     }
                 }
                 .allowsHitTesting(false)   // display only; the layer below takes the mouse
@@ -74,6 +80,16 @@ struct ViewerView: View {
                         onClick: {},
                         onDoubleClick: { zoom.toggleActualSize(backingScale: backingScale, at: $0) })
                 }
+                // When zoomed in, re-analyse just the visible area at full detail (after a short pause).
+                .task(id: DetailKey(photo: tab.currentPhoto?.id, wanted: peakingOn && zoomedIn && !covered,
+                                    area: Self.rounded(visible))) {
+                    guard peakingOn, zoomedIn, !covered, let visible, let photo = tab.currentPhoto else { return }
+                    try? await Task.sleep(for: .milliseconds(250))
+                    if Task.isCancelled { return }
+                    let margin = visible.insetBy(dx: -visible.width * 0.25, dy: -visible.height * 0.25)
+                        .intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
+                    if let result = await model.images.peakingDetail(for: photo, region: margin) { detail = result }
+                }
                 .onChange(of: geo.size, initial: true) { _, size in zoom.setMetrics(0, pane: size, image: image.size) }
                 .onChange(of: image) { _, new in zoom.setMetrics(0, pane: geo.size, image: new.size) }
             }
@@ -83,11 +99,36 @@ struct ViewerView: View {
     }
 
     /// Focus-peaking colour layer; sits exactly on the photo so it follows zoom and pan.
-    @ViewBuilder private var peakingLayer: some View {
-        if peakingOn, let peaking {
-            Image(nsImage: peaking).resizable().interpolation(.low).allowsHitTesting(false)
+    /// Zoomed in, the crisp detail layer replaces the whole-photo one while it covers what you see.
+    @ViewBuilder private func peakingLayer(visible: CGRect?, zoomedIn: Bool) -> some View {
+        if peakingOn {
+            if zoomedIn, let detail, let visible, detail.region.contains(visible) {
+                GeometryReader { g in
+                    Image(nsImage: detail.image).resizable().interpolation(.none)
+                        .frame(width: detail.region.width * g.size.width, height: detail.region.height * g.size.height)
+                        .offset(x: detail.region.minX * g.size.width, y: detail.region.minY * g.size.height)
+                }
+                .allowsHitTesting(false)
+            } else if let peaking {
+                Image(nsImage: peaking).resizable().interpolation(.low).allowsHitTesting(false)
+            }
         }
     }
+
+    /// Part of the photo currently on screen, as fractions (0...1) of the photo.
+    private static func visibleRect(_ zoom: CompareState, pane: CGSize) -> CGRect? {
+        guard let size = zoom.layout(0)?.size, size.width > 0, size.height > 0 else { return nil }
+        let c = zoom.viewport.center(forPane: 0)
+        let w = min(1, pane.width / size.width), h = min(1, pane.height / size.height)
+        return CGRect(x: c.x - w / 2, y: c.y - h / 2, width: w, height: h)
+    }
+
+    private static func rounded(_ r: CGRect?) -> CGRect? {
+        r.map { CGRect(x: ($0.minX * 100).rounded() / 100, y: ($0.minY * 100).rounded() / 100,
+                       width: ($0.width * 100).rounded() / 100, height: ($0.height * 100).rounded() / 100) }
+    }
+
+    private struct DetailKey: Hashable { let photo: Photo.ID?; let wanted: Bool; let area: CGRect? }
 
     /// Small on/off chip for focus peaking (also the P key).
     private var peakingButton: some View {
