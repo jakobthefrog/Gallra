@@ -72,9 +72,19 @@ public struct RatingWriter: Sendable {
         try? fm.removeItem(at: backup)
     }
 
+    /// Where to look for the XMP packet: the start of the file (CR3, 3FR, most DNGs), or, when there is
+    /// none there, the end of the file (DNGs re-saved by Lightroom put it last).
+    static func searchRange(in data: Data) -> Range<Int> {
+        let head = data.startIndex..<min(data.endIndex, data.startIndex + searchLimit)
+        let startOfFile = data[head]
+        // Some formats (3FR) hold bare XMP with no xpacket wrapper, so accept either marker.
+        if ["<?xpacket begin", "<x:xmpmeta"].contains(where: { startOfFile.range(of: Data($0.utf8)) != nil }) { return head }
+        return max(data.startIndex, data.endIndex - searchLimit)..<data.endIndex
+    }
+
     /// Position of the rating digit in the XMP text, or `noRatingField`.
     static func digitOffset(in data: Data) throws -> Int {
-        let head = data.prefix(searchLimit)
+        let head = data[searchRange(in: data)]
         let patterns = ["Rating>", "Rating=\""]
         var found: [Int] = []
         for pattern in patterns {

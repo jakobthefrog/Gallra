@@ -67,13 +67,17 @@ extension RatingWriter {
     private func rewriteUsingPadding(rating: Int, at url: URL, before: Fingerprint, originalSize: Int64) throws {
         let fm = FileManager.default
         let original = try Data(contentsOf: url, options: .alwaysMapped)
-        let head = original.prefix(8 * 1024 * 1024)
+        let head = original[RatingWriter.searchRange(in: original)]
         guard let begin = head.range(of: Data("<?xpacket begin".utf8)),
               let end = head.range(of: Data("<?xpacket end".utf8), in: begin.upperBound..<head.endIndex),
               head.range(of: Data("Rating".utf8), in: begin.upperBound..<end.lowerBound) == nil,
               head.range(of: Data("xmlns:xmp=\"http://ns.adobe.com/xap/1.0/\"".utf8), in: begin.upperBound..<end.lowerBound) != nil,
-              let about = head.range(of: Data("rdf:about=\"\"".utf8), in: begin.upperBound..<end.lowerBound)
+              let aboutStart = head.range(of: Data("rdf:about=\"".utf8), in: begin.upperBound..<end.lowerBound),
+              // The value is usually empty, but DJI writes "DJI Meta Data"; find its closing quote.
+              let aboutClose = head.range(of: Data("\"".utf8), in: aboutStart.upperBound..<end.lowerBound),
+              head[aboutStart.upperBound..<aboutClose.lowerBound].count < 64
         else { throw RatingError.noRatingField }
+        let about = aboutStart.lowerBound..<aboutClose.upperBound
 
         let insert = Data(" xmp:Rating=\"\(rating)\"".utf8)
         // Blank run right before "<?xpacket end": its last bytes are given up to make room.
