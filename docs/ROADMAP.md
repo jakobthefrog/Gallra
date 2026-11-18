@@ -45,10 +45,10 @@ Rule: one stage per chat session. Finish, tick boxes, commit, then start a fresh
 
 ## Stage 9: Focus peaking (mockup approved)
 - [x] Engine: `FocusPeaking` in `GallraCore/Focus` (blur, Laplacian edges, threshold, overlay image) + tests on sharp/flat/blurry images
-- [x] Viewer: toggle button + `P` key (F is the filmstrip), overlay on the single-photo view (built and compiles; not yet checked by eye in the running app)
-- [x] Overlay stays aligned and crisp when zooming and panning (zoomed in, only the visible area is re-analysed at full detail after a short pause; built, not yet checked by eye)
-- [ ] Compare view shows the overlay on both panes; sensitivity slider + colour picker, saved between launches
-- [ ] Try on real photos (preview-based; RAW-accurate peaking at 100% is a possible later add-on)
+- [x] Viewer: toggle button + `P` key (F is the filmstrip), overlay on the single-photo view
+- [x] Overlay stays aligned and crisp when zooming and panning (zoomed in, only the visible area is re-analysed at full detail after a short pause)
+- [x] Not needed (owner decision): compare-view overlay, sensitivity slider and colour picker. Peaking stays viewer-only, middle sensitivity, red
+- [x] Tried on real photos and approved by owner (preview-based; RAW-accurate peaking at 100% is a possible later add-on)
 
 ## Later (do not build yet)
 - Remote companion server + mobile apps
