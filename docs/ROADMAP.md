@@ -63,5 +63,11 @@ Shadows/Highlights read the real sensor data (Apple's RAW decoder, tone curve of
 - [x] Viewer: RAW overlay computed in background, cached, replaces the JPEG one when ready
 - [x] Tried on real photos and approved by owner
 
+## Stage 12: External drives and multi-select (mockup approved)
+- [x] Engine: external drive detection in `GallraCore/Folders` + tests
+- [x] Sidebar: "External Drives" section, live on connect/disconnect; grayed-out favorites; tabs say when their drive is gone
+- [x] Grid: clear selection outline, selected count, Shift-click range from first photo, Compare off with more than two
+- [ ] Try with a real SD card and external disk
+
 ## Later (do not build yet)
 - Remote companion server + mobile apps

@@ -1,25 +1,15 @@
 import SwiftUI
 import GallraCore
 
-/// Favorites, Locations and an expandable folder tree.
+/// Favorites, external drives, Locations and an expandable folder tree.
 struct SidebarView: View {
     let width: Double
     @Environment(AppModel.self) private var model
 
-    private var locations: [URL] {
-        var roots = [FileManager.default.homeDirectoryForCurrentUser]
-        let volumes = (try? FileManager.default.contentsOfDirectory(
-            at: URL(fileURLWithPath: "/Volumes"), includingPropertiesForKeys: [.volumeIsBrowsableKey],
-            options: [.skipsHiddenFiles])) ?? []
-        // The boot volume shows up in /Volumes as a symlink to "/"; skip it. Also skip volumes
-        // Finder hides, such as the macOS Recovery partition.
-        roots += volumes.filter {
-            $0.resolvingSymlinksInPath().path != "/"
-                && (try? $0.resourceValues(forKeys: [.volumeIsBrowsableKey]).volumeIsBrowsable) != false
-                && !$0.lastPathComponent.hasPrefix("com.apple.")   // system mounts, e.g. Time Machine local snapshots
-        }
-        return roots
-    }
+    private var locations: [URL] { [FileManager.default.homeDirectoryForCurrentUser] + model.otherVolumes }
+
+    private func volume(at path: String) -> ExternalVolume? { model.externalVolumes.first { $0.path == path } }
+    private func icon(_ drive: ExternalVolume) -> String { drive.isCameraCard ? "sdcard" : "externaldrive" }
 
     var body: some View {
         ScrollView {
@@ -27,7 +17,20 @@ struct SidebarView: View {
                 if !model.favorites.isEmpty {
                     SectionTitle("Favorites")
                     ForEach(model.favorites, id: \.self) { path in
-                        FolderRow(url: URL(fileURLWithPath: path, isDirectory: true), depth: 0, expandable: true, scope: "favorites:")
+                        if model.missingFavorites.contains(path) {
+                            MissingFavoriteRow(path: path)
+                        } else {
+                            FolderRow(url: URL(fileURLWithPath: path, isDirectory: true), depth: 0, expandable: true,
+                                      title: volume(at: path)?.name, icon: volume(at: path).map(icon) ?? "folder",
+                                      scope: "favorites:")
+                        }
+                    }
+                }
+                if !model.externalVolumes.isEmpty {
+                    SectionTitle("External Drives")
+                    ForEach(model.externalVolumes) { drive in
+                        FolderRow(url: drive.url, depth: 0, expandable: true, title: drive.name,
+                                  icon: icon(drive), scope: "drives:")
                     }
                 }
                 SectionTitle("Locations")
@@ -37,6 +40,9 @@ struct SidebarView: View {
             }
             .padding(8)
         }
+        // Favorite folders can be deleted or restored outside the app.
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in model.refreshMissingFavorites() }
+        .onReceive(NotificationCenter.default.publisher(for: .gallraFoldersChanged)) { _ in model.refreshMissingFavorites() }
         .background(Theme.sidebar)
         .safeAreaInset(edge: .bottom) {
             Button("Open Folder…") { model.chooseFolder(inNewTab: false) }
@@ -69,12 +75,45 @@ extension Notification.Name {
     static var values: [String: [FolderNode]] = [:]
 }
 
+/// A favorite that can't be reached: grayed out and not openable; the star still removes it.
+private struct MissingFavoriteRow: View {
+    let path: String
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let url = URL(fileURLWithPath: path, isDirectory: true)
+        let drive = ExternalVolumes.volumeName(inPath: path)
+        let unplugged = drive.map { name in
+            !(model.externalVolumes.map(\.path) + model.otherVolumes.map(\.path)).contains("/Volumes/" + name)
+        } ?? false
+        let isDriveRoot = drive.map { path == "/Volumes/" + $0 } ?? false
+        let reason = !unplugged ? "Folder not found" : isDriveRoot ? "Not connected" : "\(drive ?? "") · not connected"
+        HStack(spacing: 6) {
+            Color.clear.frame(width: 26, height: 26)
+            Image(systemName: unplugged ? "externaldrive" : "folder")
+            VStack(alignment: .leading, spacing: 0) {
+                Text(url.lastPathComponent).font(.system(size: 13)).lineLimit(1)
+                Text(reason).font(.system(size: 11)).lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            Button { model.toggleFavorite(url) } label: { Image(systemName: "star.fill").font(.system(size: 11)) }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Remove from favorites")
+        }
+        .foregroundStyle(Theme.textDisabled)
+        .padding(.vertical, 1).padding(.horizontal, 4)
+        .help(path)
+        .contextMenu { Button("Remove from Favorites") { model.toggleFavorite(url) } }
+    }
+}
+
 /// A folder row: disclosure arrow, icon, name, photo count, favorite star on hover.
 private struct FolderRow: View {
     let url: URL
     let depth: Int
     let expandable: Bool
     var title: String?
+    var icon = "folder"
     /// Which list the row lives in. Favorites and Locations remember open folders separately,
     /// so opening a folder in one doesn't open it in the other.
     var scope = ""
@@ -99,7 +138,7 @@ private struct FolderRow: View {
                             .contentShape(Rectangle())
                     }.buttonStyle(.plain)
                 } else { Color.clear.frame(width: 26, height: 26) }   // same height as rows with an arrow
-                Image(systemName: "folder").foregroundStyle(Theme.accent)
+                Image(systemName: icon).foregroundStyle(Theme.accent)
                 Text(title ?? url.lastPathComponent).lineLimit(1).foregroundStyle(Theme.textPrimary)
                 Spacer(minLength: 4)
                 if hovering || model.isFavorite(url) {

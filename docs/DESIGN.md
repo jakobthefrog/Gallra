@@ -106,7 +106,9 @@ Sidebar is collapsible (Cmd+Ctrl+S). On large monitors the content area grows; s
 - Files with no rating field count as unrated.
 
 ## Sidebar
-- Sections: Favorites (top), Locations (Mac, external volumes), Folders (tree).
+- Sections: Favorites (top), External Drives (only when one is connected), Locations (Mac, network volumes).
+- A favorite whose drive or folder is missing is gray (`text.disabled`), says why, and cannot be opened; its star still removes it.
+- Every selected thumbnail has the same 2 px accent ring; the status bar shows "N selected" for two or more.
 - Folder row: disclosure arrow, folder icon, name, photo count in `text.secondary`.
 - Star icon on hover toggles favorite. Double-click or Cmd+click opens the folder in a new tab.
 

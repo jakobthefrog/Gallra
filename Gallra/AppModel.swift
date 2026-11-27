@@ -31,7 +31,14 @@ final class AppModel {
     var expandedFolders: Set<String> = Set(UserDefaults.standard.stringArray(forKey: "expandedFolders") ?? []) {
         didSet { UserDefaults.standard.set(Array(expandedFolders), forKey: "expandedFolders") }
     }
-    var favorites: [String] = []
+    var favorites: [String] = [] { didSet { refreshMissingFavorites() } }
+    /// Favorites whose drive or folder can't be reached right now (shown grayed out).
+    var missingFavorites: Set<String> = []
+    /// Connected SD cards and external disks.
+    var externalVolumes: [ExternalVolume] = []
+    /// Other mounted volumes, such as network shares.
+    var otherVolumes: [URL] = []
+    private var volumeObservers: [NSObjectProtocol] = []
     var sidebarVisible = true
     /// Show photos from all sub folders too (remembered between launches, on by default).
     var includeSubfolders = UserDefaults.standard.object(forKey: "includeSubfolders") as? Bool ?? true {
@@ -81,6 +88,41 @@ final class AppModel {
             selectedTabID = tab.id
         }
         Task { await reloadFavorites() }
+        watchVolumes()
+    }
+
+    // MARK: Drives
+
+    private func watchVolumes() {
+        let center = NSWorkspace.shared.notificationCenter
+        for name in [NSWorkspace.didMountNotification, NSWorkspace.didUnmountNotification,
+                     NSWorkspace.didRenameVolumeNotification] {
+            volumeObservers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.refreshVolumes() }
+            })
+        }
+        refreshVolumes()
+    }
+
+    /// Re-reads the mounted drives, grays or restores favorites, and updates tabs showing a drive.
+    func refreshVolumes() {
+        Task {
+            let found = await Task.detached(priority: .userInitiated) { ExternalVolumes.mounted() }.value
+            externalVolumes = found.external
+            otherVolumes = found.other
+            refreshMissingFavorites()
+            for tab in tabs { tab.driveAvailabilityChanged() }
+        }
+    }
+
+    /// Checks in the background which favorites exist.
+    func refreshMissingFavorites() {
+        let list = favorites
+        Task {
+            missingFavorites = await Task.detached(priority: .utility) {
+                Set(list.filter { !ExternalVolumes.isFolder($0) })
+            }.value
+        }
     }
 
     /// Remembers the open folders and the selected one, so the next launch opens them again.

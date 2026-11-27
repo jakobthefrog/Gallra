@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 
 /// Transparent layer over a thumbnail that handles left-click and drag.
+/// With no files it also serves as the grid's empty-space click catcher.
 /// A drag carries the real files (copy only, so Finder/Desktop make copies and the originals stay put)
 /// plus the paths as text, which the grid uses to move photos between groups.
 struct FileDragOverlay: NSViewRepresentable {

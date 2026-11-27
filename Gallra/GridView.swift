@@ -13,28 +13,32 @@ struct GridView: View {
             let cols = max(1, Int((geo.size.width - gap) / (tab.cellSize + gap)))
             ScrollViewReader { proxy in
                 ScrollView {
-                    if tab.groupingActive { NewGroupZone(tab: tab) }
-                    LazyVGrid(columns: Array(repeating: GridItem(.fixed(tab.cellSize), spacing: gap), count: cols),
-                              spacing: gap) {
-                        if tab.sections.isEmpty {
-                            ForEach(cells(0..<tab.photos.count), id: \.id) { cell($0.index, in: nil) }
-                        } else {
-                            ForEach(tab.sections) { section in
-                                Section {
-                                    ForEach(cells(section.range), id: \.id) { cell($0.index, in: section) }
-                                } header: {
-                                    SceneHeader(section: section, openFolder: section.folderPath.map { path in { tab.openFolderInNewTab(path) } }, toggle: { tab.toggleCollapsed(section.id) },
-                                                drop: { items in section.sceneID.map { tab.drop(items, into: $0) } ?? false })
+                    VStack(spacing: 8) {
+                        if tab.groupingActive { NewGroupZone(tab: tab) }
+                        LazyVGrid(columns: Array(repeating: GridItem(.fixed(tab.cellSize), spacing: gap), count: cols),
+                                  spacing: gap) {
+                            if tab.sections.isEmpty {
+                                ForEach(cells(0..<tab.photos.count), id: \.id) { cell($0.index, in: nil) }
+                            } else {
+                                ForEach(tab.sections) { section in
+                                    Section {
+                                        ForEach(cells(section.range), id: \.id) { cell($0.index, in: section) }
+                                    } header: {
+                                        SceneHeader(section: section, openFolder: section.folderPath.map { path in { tab.openFolderInNewTab(path) } }, toggle: { tab.toggleCollapsed(section.id) },
+                                                    drop: { items in section.sceneID.map { tab.drop(items, into: $0) } ?? false })
+                                    }
                                 }
                             }
                         }
+                        .padding(gap)
+                        .frame(maxWidth: .infinity)
                     }
-                    .padding(gap)
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity, minHeight: geo.size.height, alignment: .top)
+                    // Clicks on empty space deselect. This is an AppKit view behind the cells on purpose:
+                    // a SwiftUI tap gesture also fires on cell clicks and wipes the selection before
+                    // Shift-click can use it.
+                    .background { FileDragOverlay(urls: { [] }) { _, _ in tab.deselect() } }
                 }
-                // Cells handle their own taps first, so this only fires on empty space.
-                .contentShape(Rectangle())
-                .onTapGesture { tab.deselect() }
                 .contextMenu { FinderMenu(folder: tab.folderPath) }
                 .onChange(of: tab.selection) { _, new in
                     if tab.photos.indices.contains(new) { proxy.scrollTo(tab.photos[new].id) }
@@ -64,8 +68,7 @@ extension GridView {
         if tab.photos.indices.contains(index) {
             let photo = tab.photos[index]
             VStack(spacing: 3) {
-                ThumbnailView(photo: photo, size: tab.cellSize, isSelected: index == tab.selection && !tab.isDeselected,
-                              isMarked: tab.marked.contains(photo.id.path))
+                ThumbnailView(photo: photo, size: tab.cellSize, isSelected: tab.isSelected(index))
                 if showCardDetails { CardCaption(photo: photo, width: tab.cellSize) }
             }
                 .id(photo.id)

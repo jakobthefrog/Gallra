@@ -21,6 +21,8 @@ A native Mac app for fast, stable photo culling. Clean, uncluttered, inspired by
 10. Filter by rating: 1, 2, 3 stars; no stars; any stars
     - Also filter by camera info (read-only EXIF): aperture, shutter speed, ISO and focal length, each as an exact value or a from/to range. Filters combine.
 11. Group by similar scenes (visual similarity), so related shots stay together
+12. SD cards and external disks are listed in their own "External Drives" sidebar section. A favorite on a disconnected drive stays, grayed out, until it is connected again (recognised by drive name and folder). Browsing only: nothing is copied.
+13. Select any number of photos in the grid (Cmd-click adds or removes, Shift-click selects a range). Compare needs at most two selected.
 
 ## System rules
 - No importing. Files are read where they are.

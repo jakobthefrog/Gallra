@@ -150,7 +150,8 @@ struct TabContentView: View {
             .controlSize(.small)
             .tint(tab.mode == .compare ? Theme.accent : nil)
             .buttonStyle(.bordered)
-            .help("Compare two photos side by side (C)")
+            .disabled(tab.tooManyToCompare)
+            .help(tab.tooManyToCompare ? "Select two photos to compare" : "Compare two photos side by side (C)")
             .accessibilityLabel("Compare")
             Picker("Thumbnail view", selection: $showCardDetails) {
                 Image(systemName: "square.grid.2x2").tag(false).help("Thumbnails only")
@@ -196,6 +197,7 @@ struct TabContentView: View {
                 Text("Scanning \(done)/\(total)")
             }
             if let (done, total) = tab.groupProgress { Text("Grouping \(done)/\(total)…") }
+            if tab.mode == .grid && tab.selectedCount > 1 { Text("\(tab.selectedCount) selected") }
             if let photo = tab.currentPhoto {
                 Text(([photo.fileName, ShotDetails.summary(photo, tab.cameraInfo)].filter { !$0.isEmpty }).joined(separator: " · "))
                     .lineLimit(1).truncationMode(.tail)

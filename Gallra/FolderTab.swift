@@ -37,6 +37,8 @@ final class FolderTab: Identifiable {
     private var writeChain: Task<Void, Never>?
     var isLoading = false
     var errorMessage: String?
+    /// True while the folder can't be reached (drive unplugged or folder gone).
+    private var isDisconnected = false
     var selection = 0 { didSet { if selection != oldValue { loadCameraInfo() } } }
     /// True after a click on empty space or Esc: no photo is selected, though `selection` remembers
     /// where it was so arrow keys carry on from there. Rating and reject keys do nothing then.
@@ -51,6 +53,8 @@ final class FolderTab: Identifiable {
     let viewerZoom = CompareState(paths: [""])
     /// Photos marked with Cmd-click or Shift+arrows (by path), used to pick a compare pair.
     var marked: Set<String> = []
+    /// The photo a Shift-click range starts from.
+    private var anchorPath: String?
     var compare: CompareState?
 
     /// Number of columns last laid out by the grid (set by the view, used for up/down keys).
@@ -71,6 +75,7 @@ final class FolderTab: Identifiable {
         selection = 0
         mode = .grid
         errorMessage = nil
+        isDisconnected = false
         isLoading = true
         reload()
         let browser = model.browser
@@ -89,6 +94,7 @@ final class FolderTab: Identifiable {
 
     func reload() {
         guard let folder, let scanner = model.scanner else { return }
+        guard ExternalVolumes.isFolder(folder.path) else { showDisconnected(); return }
         let started = Date()
         Task {
             do {
@@ -109,9 +115,37 @@ final class FolderTab: Identifiable {
                     ?? min(selection, max(photos.count - 1, 0))
                 errorMessage = nil
             } catch {
-                errorMessage = "Could not read this folder."
+                if ExternalVolumes.isFolder(folder.path) { errorMessage = "Could not read this folder." }
+                else { showDisconnected() }
             }
             isLoading = false
+        }
+    }
+
+    /// A drive was connected or removed: show that this folder is gone, or open it again.
+    func driveAvailabilityChanged() {
+        guard let folder else { return }
+        if ExternalVolumes.isFolder(folder.path) {
+            if isDisconnected { open(folder) }
+        } else {
+            showDisconnected()
+        }
+    }
+
+    private func showDisconnected() {
+        guard let folder else { return }
+        isDisconnected = true
+        watchTask?.cancel()
+        compare = nil
+        mode = .grid
+        marked = []
+        allPhotos = []
+        isLoading = false
+        if let drive = ExternalVolumes.volumeName(inPath: folder.path),
+           !ExternalVolumes.isFolder("/Volumes/" + drive) {
+            errorMessage = "\u{201C}\(drive)\u{201D} is not connected. Plug it back in to continue."
+        } else {
+            errorMessage = "This folder can no longer be found."
         }
     }
 
@@ -291,6 +325,8 @@ final class FolderTab: Identifiable {
             ordered = arrangeScenes(ordered, place: place, visible: 0, into: &sections, salt: nil)
         }
         photos = ordered
+        // Photos hidden by a filter or a collapsed header leave the selection.
+        if !marked.isEmpty { marked.formIntersection(photos.map(\.id.path)) }
         if let keep, let index = photos.firstIndex(where: { $0.id.path == keep }) { selection = index }
         else { selection = min(selection, max(photos.count - 1, 0)) }
         loadCameraInfo()
@@ -529,6 +565,7 @@ final class FolderTab: Identifiable {
         isDeselected = false
         if mode == .grid { marked = [] }
         selection = min(max(index, 0), photos.count - 1)
+        anchorPath = photos[selection].id.path
         if mode == .viewer { viewerZoom.resetZoom(); prefetchNeighbours() }
     }
 
@@ -544,6 +581,18 @@ final class FolderTab: Identifiable {
 
     // MARK: Compare
 
+    /// Compare takes two photos, so it is off while more are selected in the grid.
+    var tooManyToCompare: Bool { mode == .grid && marked.count > 2 }
+
+    /// How many photos are selected.
+    var selectedCount: Int { marked.isEmpty ? (currentPhoto == nil ? 0 : 1) : marked.count }
+
+    /// True when the grid should outline this photo as selected.
+    func isSelected(_ index: Int) -> Bool {
+        guard marked.isEmpty else { return photos.indices.contains(index) && marked.contains(photos[index].id.path) }
+        return index == selection && !isDeselected
+    }
+
     /// Marked photos if exactly two are marked, else the current photo and its neighbour.
     private var comparePair: [Photo]? {
         let picked = photos.filter { marked.contains($0.id.path) }
@@ -554,6 +603,7 @@ final class FolderTab: Identifiable {
     }
 
     func openCompare() {
+        guard !tooManyToCompare else { showNotice("Select two photos to compare."); return }
         isDeselected = false
         guard let pair = comparePair else { showNotice("Need at least two photos to compare."); return }
         compare = CompareState(paths: pair.map(\.id.path))
@@ -562,24 +612,37 @@ final class FolderTab: Identifiable {
 
     func closeCompare() { compare = nil; mode = .grid }
 
-    /// Cmd-click: add or remove a photo from the marked set.
+    /// Cmd-click: add or remove a photo from the selection.
     func toggleMark(_ index: Int) {
         guard photos.indices.contains(index) else { return }
-        isDeselected = false
         // Make sure the previously selected photo counts as the first mark.
         if marked.isEmpty, let current = currentPhoto { marked.insert(current.id.path) }
+        isDeselected = false
         let path = photos[index].id.path
-        if marked.contains(path) { marked.remove(path) } else { marked.insert(path) }
-        selection = index
+        if marked.remove(path) == nil {
+            marked.insert(path)
+            selection = index
+            anchorPath = path
+        } else if let other = photos.indices.filter({ marked.contains(photos[$0].id.path) })
+                    .min(by: { abs($0 - index) < abs($1 - index) }) {
+            // The current photo must stay a selected one, since rating keys act on it.
+            selection = other
+            anchorPath = photos[other].id.path
+        } else {
+            deselect()
+        }
     }
 
-    /// Shift-click: mark every photo from the current one to `index`, both ends included.
+    /// Shift-click: select every photo from the first clicked one to `index`, both ends included.
     func selectRange(to index: Int) {
         guard photos.indices.contains(index) else { return }
-        let anchor = currentPhoto != nil ? selection : index
-        let range = min(anchor, index)...max(anchor, index)
+        var anchor = index
+        if currentPhoto != nil {
+            anchor = anchorPath.flatMap { path in photos.firstIndex { $0.id.path == path } } ?? selection
+        }
         isDeselected = false
-        marked = Set(range.map { photos[$0].id.path })
+        marked = Set((min(anchor, index)...max(anchor, index)).map { photos[$0].id.path })
+        anchorPath = photos[anchor].id.path
         selection = index
     }
 
