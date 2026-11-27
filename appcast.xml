@@ -296,5 +296,32 @@
                        sparkle:edSignature="oS2oL9rx0URERdbUMx+bw3EJ8S3qEODG6Kj95jIRMYDfEyrTHUCrTH/IjV0F3Pd4HD57Or5UBIiL4uJ62zp7Cw==" length="2287932"
                        type="application/octet-stream"/>
         </item>
+        <item>
+            <title>Version 1.6.0</title>
+            <pubDate>Fri, 27 Nov 2026 15:31:10 -0000</pubDate>
+            <sparkle:version>18</sparkle:version>
+            <sparkle:shortVersionString>1.6.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+<h3>New</h3>
+<ul>
+<li>SD cards and external disks have their own External Drives section in the sidebar, updated as you connect and remove them</li>
+<li>Favorites on a disconnected drive stay in the list, grayed out, until the drive is back</li>
+</ul>
+<h3>Improved</h3>
+<ul>
+<li>All selected photos get the same orange outline, and the bottom bar shows how many are selected</li>
+<li>Compare is off while more than two photos are selected</li>
+<li>A tab showing a removed drive says that it is not connected</li>
+</ul>
+<h3>Fixed</h3>
+<ul>
+<li>Shift+click now selects every photo between the first and the second click</li>
+</ul>
+]]></description>
+            <enclosure url="https://github.com/jakobthefrog/Gallra/releases/download/v1.6.0/Gallra-1.6.0.zip"
+                       sparkle:edSignature="uUWv6LtZW5xg3wSF1PwL6gXTgTp5u7X4gvzFySfjRHsNeK2T9oaj4COUF2tYSAgrUY8qPtN39NuRO1Lc9qq9CQ==" length="2323316"
+                       type="application/octet-stream"/>
+        </item>
     </channel>
 </rss>
